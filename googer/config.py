@@ -9,7 +9,7 @@ from typing import Final
 # ---------------------------------------------------------------------------
 # Version
 # ---------------------------------------------------------------------------
-VERSION: Final[str] = "0.1.0"
+VERSION: Final[str] = __import__("importlib.metadata", fromlist=["version"]).version("googer")
 
 # ---------------------------------------------------------------------------
 # HTTP defaults

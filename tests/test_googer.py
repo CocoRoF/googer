@@ -184,7 +184,7 @@ class TestConfig:
     """Configuration values."""
 
     def test_version(self) -> None:
-        assert VERSION == "0.1.0"
+        assert VERSION  # non-empty string
 
     def test_safesearch_map(self) -> None:
         assert SAFESEARCH_MAP["on"] == "2"

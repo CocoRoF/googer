@@ -21,9 +21,10 @@ Advanced query::
 """
 
 import logging
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
-__version__ = "0.1.0"
+__version__ = version("googer")
 __all__ = ("Googer", "Query")
 
 # A do-nothing logging handler — library users can configure as they wish

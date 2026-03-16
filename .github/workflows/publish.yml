@@ -6,7 +6,6 @@ on:
       - deploy
     paths:
       - "pyproject.toml"
-      - "googer/__init__.py"
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -26,22 +25,22 @@ jobs:
       - name: Check version change
         id: check
         run: |
-          # Extract version from current commit
-          NEW_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' googer/__init__.py)
+          # Extract version from pyproject.toml in current commit
+          NEW_VERSION=$(grep -oP '^version\s*=\s*"\K[^"]+' pyproject.toml)
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
-          # Extract version from previous commit
-          OLD_VERSION=$(git show HEAD~1:googer/__init__.py 2>/dev/null | grep -oP '__version__\s*=\s*"\K[^"]+' || echo "")
+          # Extract version from pyproject.toml in previous commit
+          OLD_VERSION=$(git show HEAD~1:pyproject.toml 2>/dev/null | grep -oP '^version\s*=\s*"\K[^"]+' || echo "")
 
           echo "Old version: $OLD_VERSION"
           echo "New version: $NEW_VERSION"
 
-          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+          if [ -z "$OLD_VERSION" ] || [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Version changed: $OLD_VERSION → $NEW_VERSION"
+            echo "Version changed: $OLD_VERSION -> $NEW_VERSION"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "⏭️ Version unchanged, skipping publish."
+            echo "Version unchanged, skipping publish."
           fi
 
   # ---------------------------------------------------------------------------
