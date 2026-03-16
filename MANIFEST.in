@@ -1,0 +1,4 @@
+include LICENSE.md
+include README.md
+include pyproject.toml
+recursive-include googer py.typed

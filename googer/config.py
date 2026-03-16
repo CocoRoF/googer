@@ -114,13 +114,13 @@ TEXT_ELEMENTS_XPATH: Final[dict[str, str]] = {
 # ---------------------------------------------------------------------------
 # XPath selectors — News search
 # ---------------------------------------------------------------------------
-NEWS_ITEMS_XPATH: Final[str] = "//div[@class='SoaBEf']"
+NEWS_ITEMS_XPATH: Final[str] = "//a[contains(@class,'WlydOe')]"
 NEWS_ELEMENTS_XPATH: Final[dict[str, str]] = {
     "title": ".//div[@role='heading']//text()",
-    "url": ".//a/@href",
-    "body": ".//div[@class='GI74Re nDgy9d']//text()",
-    "source": ".//div[@class='MgUUmf NUnG9d']//span//text()",
-    "date": ".//div[@class='OSrXXb rbYSKb LfVVr']//span//text()",
+    "url": "./@href",
+    "body": ".//div[@role='heading']//text()",
+    "source": ".//div[contains(@class,'MgUUmf')]//span//text()",
+    "date": ".//div[contains(@class,'OSrXXb')]//span//text()",
 }
 
 # ---------------------------------------------------------------------------

@@ -130,6 +130,7 @@ class Googer:
         safesearch: str = DEFAULT_SAFESEARCH,
         timelimit: str | None = None,
         max_results: int = DEFAULT_MAX_RESULTS,
+        page: int = 1,
         rank: bool = True,
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
@@ -161,6 +162,9 @@ class Googer:
             raise GoogerException(msg)
 
         engine = self._get_engine(engine_name)
+
+        # Remove keys that are handled at this level, not by the engine
+        kwargs.pop("rank", None)
 
         # Perform multi-page search
         results = engine.search_pages(
