@@ -1,7 +1,9 @@
-"""Googer 실행 테스트 — 실제 Google 검색을 수행하고 결과를 확인한다.
+"""Googer execution test — perform real Google searches and inspect results.
 
-pytest가 아닌, 직접 실행하여 결과를 눈으로 확인하는 용도.
-사용법:
+This is not a pytest suite; it is meant to be run directly to visually
+verify live search results.
+
+Usage:
     python execution_test.py
 """
 
@@ -9,87 +11,87 @@ from googer import Googer, Query
 
 
 def divider(title: str) -> None:
-    """구분선 출력."""
+    """Print a section divider."""
     print(f"\n{'=' * 70}")
     print(f"  {title}")
     print(f"{'=' * 70}\n")
 
 
 def test_basic_search() -> None:
-    """기본 웹 검색 테스트."""
-    divider("1. 기본 웹 검색: '2025 한국 시리즈 우승팀은?'")
+    """Basic web search test."""
+    divider("1. Basic Web Search: '2025 Korea Series champion'")
 
     g = Googer()
-    results = g.search("2025 한국 시리즈 우승팀은?", region="kr-ko", max_results=5)
+    results = g.search("2025 KBO Korean Series champion", region="us-en", max_results=5)
 
-    print(f"총 {len(results)}개 결과\n")
+    print(f"{len(results)} results\n")
     for i, r in enumerate(results, 1):
         print(f"[{i}] {r.get('title', 'N/A')}")
         print(f"    URL:  {r.get('href', 'N/A')}")
-        print(f"    내용: {r.get('body', 'N/A')[:120]}")
+        print(f"    Body: {r.get('body', 'N/A')[:120]}")
         print()
 
 
 def test_query_builder_search() -> None:
-    """Query 빌더를 사용한 고급 검색."""
-    divider("2. Query 빌더: '한국시리즈' + exact('2025') + site:naver.com")
+    """Advanced search using the Query builder."""
+    divider("2. Query Builder: 'machine learning' + exact('neural network') + site:arxiv.org")
 
-    q = Query("한국시리즈").exact("2025").site("naver.com")
-    print(f"빌드된 쿼리: {q}\n")
+    q = Query("machine learning").exact("neural network").site("arxiv.org")
+    print(f"Built query: {q}\n")
 
     g = Googer()
-    results = g.search(q, region="kr-ko", max_results=5)
+    results = g.search(q, region="us-en", max_results=5)
 
-    print(f"총 {len(results)}개 결과\n")
+    print(f"{len(results)} results\n")
     for i, r in enumerate(results, 1):
         print(f"[{i}] {r.get('title', 'N/A')}")
         print(f"    URL:  {r.get('href', 'N/A')}")
-        print(f"    내용: {r.get('body', 'N/A')[:120]}")
+        print(f"    Body: {r.get('body', 'N/A')[:120]}")
         print()
 
 
 def test_news_search() -> None:
-    """뉴스 검색 테스트."""
-    divider("3. 뉴스 검색: '한국시리즈 2025'")
+    """News search test."""
+    divider("3. News Search: 'artificial intelligence 2025'")
 
     g = Googer()
-    results = g.news("한국시리즈 2025", region="kr-ko", max_results=5)
+    results = g.news("artificial intelligence 2025", region="us-en", max_results=5)
 
-    print(f"총 {len(results)}개 결과\n")
+    print(f"{len(results)} results\n")
     for i, r in enumerate(results, 1):
         print(f"[{i}] {r.get('title', 'N/A')}")
-        print(f"    URL:  {r.get('href', r.get('url', 'N/A'))}")
-        print(f"    출처: {r.get('source', 'N/A')}")
-        print(f"    날짜: {r.get('date', 'N/A')}")
-        print(f"    내용: {r.get('body', 'N/A')[:120]}")
+        print(f"    URL:    {r.get('href', r.get('url', 'N/A'))}")
+        print(f"    Source: {r.get('source', 'N/A')}")
+        print(f"    Date:   {r.get('date', 'N/A')}")
+        print(f"    Body:   {r.get('body', 'N/A')[:120]}")
         print()
 
 
 def test_context_manager() -> None:
-    """Context Manager 사용 테스트."""
+    """Context manager usage test."""
     divider("4. Context Manager: 'Python 3.13 new features'")
 
     with Googer() as g:
         results = g.search("Python 3.13 new features", max_results=3)
 
-    print(f"총 {len(results)}개 결과\n")
+    print(f"{len(results)} results\n")
     for i, r in enumerate(results, 1):
         print(f"[{i}] {r.get('title', 'N/A')}")
         print(f"    URL:  {r.get('href', 'N/A')}")
-        print(f"    내용: {r.get('body', 'N/A')[:120]}")
+        print(f"    Body: {r.get('body', 'N/A')[:120]}")
         print()
 
 
 def main() -> None:
-    """전체 실행 테스트."""
+    """Run all execution tests."""
     print("=" * 70)
-    print("  Googer 실행 테스트 (실제 Google 검색)")
+    print("  Googer Execution Test (Live Google Search)")
     print("=" * 70)
 
     tests = [
-        ("기본 웹 검색", test_basic_search),
-        ("Query 빌더 검색", test_query_builder_search),
-        ("뉴스 검색", test_news_search),
+        ("Basic Web Search", test_basic_search),
+        ("Query Builder Search", test_query_builder_search),
+        ("News Search", test_news_search),
         ("Context Manager", test_context_manager),
     ]
 
@@ -106,7 +108,7 @@ def main() -> None:
             print(f"      Error: {type(e).__name__}: {e}")
             failed += 1
 
-    divider("실행 결과 요약")
+    divider("Test Summary")
     print(f"  PASS: {passed}")
     print(f"  FAIL: {failed}")
     print(f"  TOTAL: {passed + failed}")
