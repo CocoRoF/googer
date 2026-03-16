@@ -27,12 +27,12 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+version = "0.1.0"
 dependencies = [
     "click>=8.1.8",
     "primp>=1.1.0",
     "lxml>=4.9.4",
 ]
-dynamic = ["version"]
 
 [project.urls]
 "Homepage" = "https://github.com/googer/googer"
@@ -40,9 +40,6 @@ dynamic = ["version"]
 
 [project.scripts]
 googer = "googer.cli:safe_entry_point"
-
-[tool.setuptools.dynamic]
-version = {attr = "googer.__version__"}  # reads __version__ string directly, no heavy imports
 
 [tool.setuptools.packages.find]
 include = ["googer*"]
