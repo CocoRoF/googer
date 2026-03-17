@@ -46,7 +46,7 @@ _COLORS: dict[int, str] = {
 # ---------------------------------------------------------------------------
 
 
-def _print_results(results: list[dict[str, Any]], *, no_color: bool = False) -> None:
+def _print_results(results: list[Any], *, no_color: bool = False) -> None:
     """Pretty-print results to the terminal."""
     if not results:
         click.echo("No results found.")
@@ -68,26 +68,28 @@ def _print_results(results: list[dict[str, Any]], *, no_color: bool = False) -> 
                 click.secho(f"  {key:<12}{text}", fg=color)
 
 
-def _save_json(filepath: Path, data: list[dict[str, Any]]) -> None:
+def _save_json(filepath: Path, data: list[Any]) -> None:
     """Save results as JSON."""
+    serializable = [r.to_dict() if hasattr(r, "to_dict") else r for r in data]
     with filepath.open("w", encoding="utf-8") as f:
-        f.write(json.dumps(data, ensure_ascii=False, indent=2))
+        f.write(json.dumps(serializable, ensure_ascii=False, indent=2))
     click.echo(f"Saved to {filepath}")
 
 
-def _save_csv(filepath: Path, data: list[dict[str, Any]]) -> None:
+def _save_csv(filepath: Path, data: list[Any]) -> None:
     """Save results as CSV."""
     if not data:
         return
+    serializable = [r.to_dict() if hasattr(r, "to_dict") else r for r in data]
     with filepath.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=data[0].keys(), quoting=csv.QUOTE_MINIMAL)
+        writer = csv.DictWriter(f, fieldnames=serializable[0].keys(), quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
-        writer.writerows(data)
+        writer.writerows(serializable)
     click.echo(f"Saved to {filepath}")
 
 
 def _save_data(
-    results: list[dict[str, Any]],
+    results: list[Any],
     query: str,
     command: str,
     output: str | None,

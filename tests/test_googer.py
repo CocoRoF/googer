@@ -121,6 +121,45 @@ class TestTextResult:
         assert d["title"] == "Test"
         assert d["href"] == "https://example.com"
 
+    def test_getitem(self) -> None:
+        r = TextResult(title="Test", href="https://example.com", body="Body")
+        assert r["title"] == "Test"
+        assert r["href"] == "https://example.com"
+
+    def test_get_with_default(self) -> None:
+        r = TextResult(title="Test")
+        assert r.get("title") == "Test"
+        assert r.get("nonexistent", "default") == "default"
+
+    def test_contains(self) -> None:
+        r = TextResult(title="Test")
+        assert "title" in r
+        assert "nonexistent" not in r
+
+    def test_keys_values_items(self) -> None:
+        r = TextResult(title="Test", href="https://example.com", body="Body")
+        assert "title" in r.keys()
+        assert "href" in r.keys()
+        assert "Test" in r.values()
+        items = dict(r.items())
+        assert items["title"] == "Test"
+
+    def test_iter_and_dict_conversion(self) -> None:
+        r = TextResult(title="Test", href="https://example.com", body="Body")
+        d = dict(r)
+        assert d["title"] == "Test"
+        assert d["href"] == "https://example.com"
+
+    def test_len(self) -> None:
+        r = TextResult(title="Test", href="https://example.com", body="Body")
+        assert len(r) == 3
+
+    def test_attribute_access(self) -> None:
+        r = TextResult(title="Test", href="https://example.com", body="Body")
+        assert r.title == "Test"
+        assert r.href == "https://example.com"
+        assert r.body == "Body"
+
 
 class TestResultsAggregator:
     """Deduplication aggregator."""
@@ -143,6 +182,16 @@ class TestResultsAggregator:
         dicts = agg.extract_dicts()
         assert dicts[0]["href"] == "https://a.com"
 
+    def test_extract_returns_objects(self) -> None:
+        agg = ResultsAggregator({"href"})
+        r1 = TextResult(title="A", href="https://a.com", body="A")
+        r2 = TextResult(title="B", href="https://b.com", body="B")
+        agg.append(r1)
+        agg.append(r2)
+        results = agg.extract()
+        assert isinstance(results[0], TextResult)
+        assert results[0].title == "A"
+
     def test_empty_cache_fields_raises(self) -> None:
         with pytest.raises(ValueError):
             ResultsAggregator(set())
@@ -159,20 +208,29 @@ class TestRanker:
     def test_wikipedia_boost(self) -> None:
         ranker = Ranker()
         docs = [
+            TextResult(title="Regular", href="https://example.com", body="python info"),
+            TextResult(title="Python Wiki", href="https://en.wikipedia.org/wiki/Python", body="python"),
+        ]
+        ranked = ranker.rank(docs, "python")
+        assert "wikipedia" in ranked[0].href
+
+    def test_both_match_before_title_only(self) -> None:
+        ranker = Ranker()
+        docs = [
+            TextResult(title="Python", href="https://a.com", body="no match here"),
+            TextResult(title="Python tutorial", href="https://b.com", body="learn python"),
+        ]
+        ranked = ranker.rank(docs, "python")
+        assert ranked[0].href == "https://b.com"
+
+    def test_rank_with_dicts_backward_compat(self) -> None:
+        ranker = Ranker()
+        docs = [
             {"title": "Regular", "href": "https://example.com", "body": "python info"},
             {"title": "Python Wiki", "href": "https://en.wikipedia.org/wiki/Python", "body": "python"},
         ]
         ranked = ranker.rank(docs, "python")
         assert "wikipedia" in ranked[0]["href"]
-
-    def test_both_match_before_title_only(self) -> None:
-        ranker = Ranker()
-        docs = [
-            {"title": "Python", "href": "https://a.com", "body": "no match here"},
-            {"title": "Python tutorial", "href": "https://b.com", "body": "learn python"},
-        ]
-        ranked = ranker.rank(docs, "python")
-        assert ranked[0]["href"] == "https://b.com"
 
 
 # ---------------------------------------------------------------------------

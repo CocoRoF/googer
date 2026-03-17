@@ -9,7 +9,7 @@ Quick start::
 
     results = Googer().search("python programming")
     for r in results:
-        print(r["title"], r["href"])
+        print(r.title, r.href)
 
 Advanced query::
 
@@ -25,7 +25,14 @@ from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 __version__ = version("googer")
-__all__ = ("Googer", "Query")
+__all__ = (
+    "Googer",
+    "ImageResult",
+    "NewsResult",
+    "Query",
+    "TextResult",
+    "VideoResult",
+)
 
 # A do-nothing logging handler — library users can configure as they wish
 # https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library
@@ -34,6 +41,7 @@ logging.getLogger("googer").addHandler(logging.NullHandler())
 if TYPE_CHECKING:
     from .googer import Googer
     from .query_builder import Query
+    from .results import ImageResult, NewsResult, TextResult, VideoResult
 
 
 def __getattr__(name: str) -> object:
@@ -48,5 +56,11 @@ def __getattr__(name: str) -> object:
 
         globals()["Query"] = Query
         return Query
+    if name in ("TextResult", "ImageResult", "NewsResult", "VideoResult"):
+        from . import results as _results
+
+        cls = getattr(_results, name)
+        globals()[name] = cls
+        return cls
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)

@@ -39,7 +39,14 @@ from .exceptions import GoogerException, NoResultsException
 from .http_client import HttpClient
 from .query_builder import Query
 from .ranker import Ranker
-from .results import ResultsAggregator
+from .results import (
+    BaseResult,
+    ImageResult,
+    NewsResult,
+    ResultsAggregator,
+    TextResult,
+    VideoResult,
+)
 from .utils import expand_proxy_alias
 
 logger = logging.getLogger(__name__)
@@ -133,7 +140,7 @@ class Googer:
         page: int = 1,
         rank: bool = True,
         **kwargs: Any,
-    ) -> list[dict[str, Any]]:
+    ) -> list[BaseResult]:
         """Internal search dispatcher.
 
         Args:
@@ -148,7 +155,7 @@ class Googer:
             **kwargs: Engine-specific keyword arguments.
 
         Returns:
-            List of result dicts.
+            List of result objects (e.g. :class:`TextResult`).
 
         Raises:
             GoogerException: On empty query.
@@ -183,13 +190,13 @@ class Googer:
         # Aggregate & deduplicate
         aggregator = ResultsAggregator({"href", "url", "image"})
         aggregator.extend(results)
-        result_dicts = aggregator.extract_dicts()
+        result_objects = aggregator.extract()
 
         # Rank
         if rank:
-            result_dicts = self._ranker.rank(result_dicts, query_str)
+            result_objects = self._ranker.rank(result_objects, query_str)
 
-        return result_dicts[:max_results]
+        return result_objects[:max_results]
 
     # -- public search methods ----------------------------------------------
 
@@ -203,7 +210,7 @@ class Googer:
         max_results: int = DEFAULT_MAX_RESULTS,
         page: int = 1,
         rank: bool = True,
-    ) -> list[dict[str, Any]]:
+    ) -> list[TextResult]:
         """Perform a Google web/text search.
 
         Args:
@@ -216,7 +223,7 @@ class Googer:
             rank: Apply relevance ranking.  Defaults to ``True``.
 
         Returns:
-            List of dicts with keys: ``title``, ``href``, ``body``.
+            List of :class:`TextResult` objects with ``title``, ``href``, ``body`` attributes.
 
         Raises:
             GoogerException: On invalid input.
@@ -224,10 +231,12 @@ class Googer:
 
         Example::
 
-            >>> Googer().search("python tutorial", max_results=5)
+            >>> results = Googer().search("python tutorial", max_results=5)
+            >>> results[0].title
+            'Python Tutorial'
 
         """
-        return self._search(
+        return self._search(  # type: ignore[return-value]
             "text",
             query,
             region=region,
@@ -250,7 +259,7 @@ class Googer:
         color: str | None = None,
         image_type: str | None = None,
         license_type: str | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[ImageResult]:
         """Perform a Google image search.
 
         Args:
@@ -265,10 +274,11 @@ class Googer:
             license_type: License filter (``"creative_commons"``, ``"commercial"``).
 
         Returns:
-            List of dicts with keys: ``title``, ``image``, ``thumbnail``, ``url``, ``height``, ``width``, ``source``.
+            List of :class:`ImageResult` objects with ``title``, ``image``,
+            ``thumbnail``, ``url``, ``height``, ``width``, ``source`` attributes.
 
         """
-        return self._search(
+        return self._search(  # type: ignore[return-value]
             "images",
             query,
             region=region,
@@ -289,7 +299,7 @@ class Googer:
         safesearch: str = DEFAULT_SAFESEARCH,
         timelimit: str | None = None,
         max_results: int = DEFAULT_MAX_RESULTS,
-    ) -> list[dict[str, Any]]:
+    ) -> list[NewsResult]:
         """Perform a Google news search.
 
         Args:
@@ -300,10 +310,11 @@ class Googer:
             max_results: Maximum number of results.
 
         Returns:
-            List of dicts with keys: ``title``, ``url``, ``body``, ``source``, ``date``, ``image``.
+            List of :class:`NewsResult` objects with ``title``, ``url``,
+            ``body``, ``source``, ``date``, ``image`` attributes.
 
         """
-        return self._search(
+        return self._search(  # type: ignore[return-value]
             "news",
             query,
             region=region,
@@ -321,7 +332,7 @@ class Googer:
         timelimit: str | None = None,
         max_results: int = DEFAULT_MAX_RESULTS,
         duration: str | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[VideoResult]:
         """Perform a Google video search.
 
         Args:
@@ -333,10 +344,11 @@ class Googer:
             duration: Duration filter (``"short"``, ``"medium"``, ``"long"``).
 
         Returns:
-            List of dicts with keys: ``title``, ``url``, ``body``, ``duration``, ``source``, ``date``, ``thumbnail``.
+            List of :class:`VideoResult` objects with ``title``, ``url``,
+            ``body``, ``duration``, ``source``, ``date``, ``thumbnail`` attributes.
 
         """
-        return self._search(
+        return self._search(  # type: ignore[return-value]
             "videos",
             query,
             region=region,

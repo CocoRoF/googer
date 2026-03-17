@@ -5,7 +5,9 @@ buckets results based on query-token overlap.
 """
 
 import re
-from typing import Final
+from typing import Final, TypeVar
+
+_T = TypeVar("_T")
 
 
 class Ranker:
@@ -48,11 +50,12 @@ class Ranker:
 
     # -- public API ---------------------------------------------------------
 
-    def rank(self, docs: list[dict[str, str]], query: str) -> list[dict[str, str]]:
+    def rank(self, docs: list[_T], query: str) -> list[_T]:
         """Return *docs* reordered by relevance to *query*.
 
         Args:
-            docs: List of result dicts (must have ``title``, ``body``/``description``, ``href``/``url``).
+            docs: List of result objects or dicts (must support ``.get()``
+                for ``title``, ``body``/``description``, ``href``/``url``).
             query: The original search query.
 
         Returns:
@@ -63,16 +66,16 @@ class Ranker:
         if not tokens:
             return docs
 
-        wiki: list[dict[str, str]] = []
-        both: list[dict[str, str]] = []
-        title_only: list[dict[str, str]] = []
-        body_only: list[dict[str, str]] = []
-        neither: list[dict[str, str]] = []
+        wiki: list[_T] = []
+        both: list[_T] = []
+        title_only: list[_T] = []
+        body_only: list[_T] = []
+        neither: list[_T] = []
 
         for doc in docs:
-            href = doc.get("href", doc.get("url", ""))
-            title = doc.get("title", "")
-            body = doc.get("body", doc.get("description", doc.get("snippet", "")))
+            href = doc.get("href", doc.get("url", ""))  # type: ignore[union-attr]
+            title = doc.get("title", "")  # type: ignore[union-attr]
+            body = doc.get("body", doc.get("description", doc.get("snippet", "")))  # type: ignore[union-attr]
 
             # Skip Wikimedia category pages
             if "Category:" in title and "Wikimedia" in title:

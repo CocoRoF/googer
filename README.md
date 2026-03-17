@@ -34,7 +34,7 @@ from googer import Googer
 # Simple search
 results = Googer().search("python programming")
 for r in results:
-    print(r["title"], r["href"])
+    print(r.title, r.href)
 ```
 
 ### Advanced Query Builder
@@ -66,12 +66,18 @@ web = g.search("python", region="ko-kr", max_results=10)
 
 # Image search with filters
 images = g.images("cute cats", size="large", color="color")
+for img in images:
+    print(img.title, img.image)
 
 # News search — last 24 hours
 news = g.news("artificial intelligence", timelimit="d")
+for n in news:
+    print(n.title, n.source, n.date)
 
 # Video search — short videos only
 videos = g.videos("python tutorial", duration="short")
+for v in videos:
+    print(v.title, v.url, v.duration)
 ```
 
 ### Context Manager & Proxy

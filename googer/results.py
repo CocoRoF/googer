@@ -47,6 +47,43 @@ class BaseResult:
             value = normalizer(value)
         object.__setattr__(self, name, value)
 
+    # -- dict-like access (backward compatibility) --------------------------
+
+    def __getitem__(self, key: str) -> Any:
+        """Allow ``result["title"]`` style access."""
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key) from None
+
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and not key.startswith("_") and hasattr(self, key)
+
+    def __iter__(self):
+        """Iterate over field names (enables ``dict(result)``)."""
+        return (k for k in self.__dict__ if not k.startswith("_"))
+
+    def __len__(self) -> int:
+        return sum(1 for k in self.__dict__ if not k.startswith("_"))
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-style ``.get()`` with optional default."""
+        return getattr(self, key, default)
+
+    def keys(self) -> list[str]:
+        """Return field names."""
+        return [k for k in self.__dict__ if not k.startswith("_")]
+
+    def values(self) -> list[Any]:
+        """Return field values."""
+        return [v for k, v in self.__dict__.items() if not k.startswith("_")]
+
+    def items(self) -> list[tuple[str, Any]]:
+        """Return ``(field, value)`` pairs."""
+        return [(k, v) for k, v in self.__dict__.items() if not k.startswith("_")]
+
+    # -- serialization ------------------------------------------------------
+
     def to_dict(self) -> dict[str, Any]:
         """Return a plain dictionary representation."""
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
@@ -157,6 +194,10 @@ class ResultsAggregator:
         for item in items:
             self.append(item)
 
+    def extract(self) -> list[BaseResult]:
+        """Return accumulated result objects sorted by descending frequency."""
+        return [self._cache[key] for key, _ in self._counter.most_common()]
+
     def extract_dicts(self) -> list[dict[str, Any]]:
-        """Return accumulated results sorted by descending frequency."""
+        """Return accumulated results as dicts sorted by descending frequency."""
         return [self._cache[key].to_dict() for key, _ in self._counter.most_common()]
