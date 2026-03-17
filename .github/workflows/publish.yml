@@ -121,6 +121,12 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
           manylinux: ${{ matrix.manylinux }}
+          before-script-linux: |
+            # Fix ring crate cross-compilation for aarch64
+            # The manylinux cross-compiler doesn't set __ARM_ARCH by default
+            if [ "$(uname -m)" != "aarch64" ]; then
+              export CFLAGS_aarch64_unknown_linux_gnu="-march=armv8-a"
+            fi
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
