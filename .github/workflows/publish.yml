@@ -139,6 +139,9 @@ jobs:
             elif command -v apt-get &> /dev/null; then
               apt-get update && apt-get install -y perl
             fi
+            # Fix ring crate aarch64 cross-compilation:
+            # the cross-compiler doesn't define __ARM_ARCH for .S assembly files
+            export CFLAGS_aarch64_unknown_linux_gnu="-D__ARM_ARCH=8"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
