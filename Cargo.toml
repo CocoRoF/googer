@@ -1,6 +1,6 @@
 [package]
 name = "googer"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 description = "A powerful, type-safe Google Search library for Python — powered by Rust."
 license = "Apache-2.0"
