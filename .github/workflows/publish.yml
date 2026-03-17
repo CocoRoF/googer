@@ -123,11 +123,11 @@ jobs:
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
-            # Ensure OpenSSL dev headers are available for native-tls
+            # Ensure Perl is available for vendored OpenSSL build (openssl-src)
             if command -v yum &> /dev/null; then
-              yum install -y openssl-devel perl-IPC-Cmd
+              yum install -y perl-IPC-Cmd perl-core
             elif command -v apk &> /dev/null; then
-              apk add --no-cache openssl-dev perl
+              apk add --no-cache perl make
             fi
 
       - name: Upload wheels
