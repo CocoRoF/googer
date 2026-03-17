@@ -40,3 +40,6 @@ Desktop.ini
 
 # Ruff
 .ruff_cache/
+
+# Rust / Cargo
+target/

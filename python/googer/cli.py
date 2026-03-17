@@ -1,4 +1,4 @@
-"""CLI interface for Googer.
+"""CLI interface for Googer (Rust-powered).
 
 Provides a ``googer`` command-line tool built with Click.
 Supports text, image, news, and video search with formatted output
@@ -6,10 +6,10 @@ and optional JSON/CSV export.
 
 Usage::
 
-    googer search "python programming" --max-results 5
-    googer news "artificial intelligence" --timelimit d
-    googer images "cute cats" --size large
-    googer videos "python tutorial" --duration short
+    googer search -q "python programming" --max-results 5
+    googer news -q "artificial intelligence" --timelimit d
+    googer images -q "cute cats" --size large
+    googer videos -q "python tutorial" --duration short
 
 """
 
@@ -24,7 +24,7 @@ from typing import Any
 import click
 
 from . import __version__
-from .googer import Googer
+from ._core import Googer
 
 # ---------------------------------------------------------------------------
 # Colour palette for terminal output
@@ -102,7 +102,6 @@ def _save_data(
     elif output.endswith(".csv"):
         _save_csv(Path(output), results)
     else:
-        # Auto-generate filename
         sanitized = query.replace(" ", "_")[:50]
         ts = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
         _save_json(Path(f"{command}_{sanitized}_{ts}.json"), results)
@@ -159,7 +158,7 @@ def _add_common_options(func):  # noqa: ANN001, ANN202
 @click.group()
 @click.version_option(version=__version__, prog_name="googer")
 def cli() -> None:
-    """Googer — A powerful Google Search CLI."""
+    """Googer — A powerful Google Search CLI (Rust-powered)."""
 
 
 def safe_entry_point() -> None:
@@ -307,9 +306,3 @@ def videos(
     )
     _print_results(results, no_color=no_color)
     _save_data(results, query, "videos", output)
-
-
-@cli.command()
-def version() -> None:
-    """Print the Googer version."""
-    click.echo(__version__)

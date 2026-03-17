@@ -1,296 +1,330 @@
-"""Tests for the Googer library — unit tests (no network)."""
+"""googer-rust unit tests.
+
+Validates all Python API exposed by the Rust native extension.
+"""
 
 import pytest
 
-from googer import Googer, Query
-from googer.config import SAFESEARCH_MAP, TIMELIMIT_MAP, VERSION
-from googer.exceptions import GoogerException
-from googer.ranker import Ranker
-from googer.results import ResultsAggregator, TextResult
-from googer.utils import (
-    build_region_params,
-    expand_proxy_alias,
-    extract_clean_url,
-    normalize_text,
-    normalize_url,
+from googer import (
+    Googer,
+    GoogerException,
+    HttpException,
+    ImageResult,
+    NewsResult,
+    NoResultsException,
+    ParseException,
+    Query,
+    QueryBuildException,
+    RateLimitException,
+    TextResult,
+    TimeoutException,
+    VideoResult,
 )
 
 
-# ---------------------------------------------------------------------------
-# Utils
-# ---------------------------------------------------------------------------
+# ── Import ──────────────────────────────────────────────────────────────────
 
 
-class TestNormalizeUrl:
-    """URL normalization."""
+class TestImports:
+    """Verify all public names are importable."""
 
-    def test_empty(self) -> None:
-        assert normalize_url("") == ""
+    def test_core_module(self):
+        from googer import _core
 
-    def test_unquote(self) -> None:
-        assert normalize_url("https://example.com/hello%20world") == "https://example.com/hello+world"
+        assert hasattr(_core, "Googer")
 
-    def test_passthrough(self) -> None:
-        url = "https://example.com/path"
-        assert normalize_url(url) == url
-
-
-class TestNormalizeText:
-    """Text normalization."""
-
-    def test_empty(self) -> None:
-        assert normalize_text("") == ""
-
-    def test_strip_html(self) -> None:
-        assert normalize_text("<b>bold</b> text") == "bold text"
-
-    def test_unescape(self) -> None:
-        assert normalize_text("&amp; &lt;") == "& <"
-
-    def test_collapse_whitespace(self) -> None:
-        assert normalize_text("  hello   world  ") == "hello world"
+    def test_all_names(self):
+        assert Googer is not None
+        assert Query is not None
+        assert TextResult is not None
+        assert ImageResult is not None
+        assert NewsResult is not None
+        assert VideoResult is not None
 
 
-class TestExtractCleanUrl:
-    """Google redirect URL cleaning."""
-
-    def test_google_redirect(self) -> None:
-        url = "/url?q=https://example.com&sa=U"
-        assert extract_clean_url(url) == "https://example.com"
-
-    def test_passthrough(self) -> None:
-        url = "https://example.com"
-        assert extract_clean_url(url) == url
+# ── Googer Instance ────────────────────────────────────────────────────────
 
 
-class TestBuildRegionParams:
-    """Region parameter building."""
+class TestGooger:
+    """Test Googer class instantiation and configuration."""
 
-    def test_us_en(self) -> None:
-        params = build_region_params("us-en")
-        assert params["hl"] == "en-US"
-        assert params["lr"] == "lang_en"
-        assert params["cr"] == "countryUS"
+    def test_default_creation(self):
+        g = Googer()
+        assert g is not None
 
-    def test_ko_kr(self) -> None:
-        params = build_region_params("kr-ko")
-        assert params["hl"] == "ko-KR"
-        assert params["lr"] == "lang_ko"
-        assert params["cr"] == "countryKR"
+    def test_with_options(self):
+        g = Googer(timeout=30, verify=True, max_retries=5)
+        assert g is not None
 
-    def test_invalid_format(self) -> None:
-        params = build_region_params("invalid")
-        assert params["hl"] == "en-US"
+    def test_context_manager(self):
+        with Googer() as g:
+            assert g is not None
 
+    def test_empty_query_raises(self):
+        g = Googer()
+        with pytest.raises(GoogerException):
+            g.search("")
 
-class TestExpandProxy:
-    """Proxy alias expansion."""
-
-    def test_tb_alias(self) -> None:
-        assert expand_proxy_alias("tb") == "socks5h://127.0.0.1:9150"
-
-    def test_none(self) -> None:
-        assert expand_proxy_alias(None) is None
-
-    def test_passthrough(self) -> None:
-        assert expand_proxy_alias("http://proxy:8080") == "http://proxy:8080"
+    def test_whitespace_query_raises(self):
+        g = Googer()
+        with pytest.raises(GoogerException):
+            g.search("   ")
 
 
-# ---------------------------------------------------------------------------
-# Results
-# ---------------------------------------------------------------------------
+# ── Query Builder ──────────────────────────────────────────────────────────
+
+
+class TestQueryBuilder:
+    """Test the fluent query builder API."""
+
+    def test_basic(self):
+        assert Query("python").build() == "python"
+
+    def test_exact(self):
+        result = Query("search").exact("exact phrase").build()
+        assert '"exact phrase"' in result
+
+    def test_or_term(self):
+        result = Query("base").or_term("alpha").or_term("beta").build()
+        assert "OR" in result
+        assert "alpha" in result
+        assert "beta" in result
+
+    def test_exclude(self):
+        result = Query("rust").exclude("java").build()
+        assert "-java" in result
+
+    def test_site(self):
+        result = Query("news").site("bbc.com").build()
+        assert "site:bbc.com" in result
+
+    def test_filetype(self):
+        result = Query("report").filetype("pdf").build()
+        assert "filetype:pdf" in result
+
+    def test_intitle(self):
+        assert "intitle:important" in Query("q").intitle("important").build()
+
+    def test_inurl(self):
+        assert "inurl:docs" in Query("q").inurl("docs").build()
+
+    def test_intext(self):
+        assert "intext:keyword" in Query("q").intext("keyword").build()
+
+    def test_related(self):
+        assert "related:example.com" in Query("q").related("example.com").build()
+
+    def test_cache(self):
+        assert "cache:example.com/page" in Query("q").cache("example.com/page").build()
+
+    def test_date_range(self):
+        result = Query("q").date_range("2025-01-01", "2025-12-31").build()
+        assert "after:2025-01-01" in result
+        assert "before:2025-12-31" in result
+
+    def test_raw(self):
+        result = Query("q").raw("custom:fragment").build()
+        assert "custom:fragment" in result
+
+    def test_chaining(self):
+        result = (
+            Query("ml")
+            .exact("deep learning")
+            .site("arxiv.org")
+            .filetype("pdf")
+            .exclude("survey")
+            .build()
+        )
+        assert '"deep learning"' in result
+        assert "site:arxiv.org" in result
+        assert "filetype:pdf" in result
+        assert "-survey" in result
+
+    def test_empty_raises(self):
+        with pytest.raises(QueryBuildException):
+            Query("").build()
+
+    def test_str(self):
+        assert str(Query("hello")) == "hello"
+
+    def test_repr(self):
+        r = repr(Query("hello"))
+        assert "Query" in r and "hello" in r
+
+    def test_bool_truthy(self):
+        assert bool(Query("something")) is True
+
+    def test_bool_falsy(self):
+        assert bool(Query("")) is False
+
+
+# ── TextResult ─────────────────────────────────────────────────────────────
 
 
 class TestTextResult:
-    """TextResult dataclass."""
+    """Test TextResult dict-like interface."""
 
-    def test_default_values(self) -> None:
+    @pytest.fixture()
+    def result(self):
+        return TextResult(title="Title", href="https://example.com", body="Body text")
+
+    def test_getters(self, result):
+        assert result.title == "Title"
+        assert result.href == "https://example.com"
+        assert result.body == "Body text"
+
+    def test_to_dict(self, result):
+        d = result.to_dict()
+        assert isinstance(d, dict)
+        assert d["title"] == "Title"
+        assert d["href"] == "https://example.com"
+        assert d["body"] == "Body text"
+
+    def test_keys(self, result):
+        assert result.keys() == ["title", "href", "body"]
+
+    def test_values(self, result):
+        assert result.values() == ["Title", "https://example.com", "Body text"]
+
+    def test_items(self, result):
+        assert result.items() == [
+            ("title", "Title"),
+            ("href", "https://example.com"),
+            ("body", "Body text"),
+        ]
+
+    def test_get_existing(self, result):
+        assert result.get("title") == "Title"
+
+    def test_get_missing(self, result):
+        assert result.get("missing") is None
+
+    def test_get_default(self, result):
+        assert result.get("missing", "fallback") == "fallback"
+
+    def test_getitem(self, result):
+        assert result["title"] == "Title"
+
+    def test_getitem_invalid(self, result):
+        with pytest.raises(KeyError):
+            _ = result["invalid"]
+
+    def test_contains(self, result):
+        assert "title" in result
+        assert "href" in result
+        assert "nonexistent" not in result
+
+    def test_len(self, result):
+        assert len(result) == 3
+
+    def test_repr(self, result):
+        s = repr(result)
+        assert "TextResult" in s
+        assert "Title" in s
+
+    def test_default_empty(self):
         r = TextResult()
         assert r.title == ""
         assert r.href == ""
         assert r.body == ""
 
-    def test_normalization(self) -> None:
-        r = TextResult()
-        r.title = "<b>Hello</b>"
-        assert r.title == "Hello"
 
-    def test_to_dict(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
+# ── ImageResult ────────────────────────────────────────────────────────────
+
+
+class TestImageResult:
+    """Test ImageResult."""
+
+    def test_creation(self):
+        r = ImageResult(title="Img", image="http://img.png", url="http://page.com")
+        assert r.title == "Img"
+        assert r.image == "http://img.png"
+        assert r.url == "http://page.com"
+
+    def test_len(self):
+        assert len(ImageResult()) == 7
+
+    def test_to_dict(self):
+        r = ImageResult(title="T", image="I")
         d = r.to_dict()
-        assert d["title"] == "Test"
-        assert d["href"] == "https://example.com"
+        assert d["title"] == "T"
+        assert d["image"] == "I"
 
-    def test_getitem(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
-        assert r["title"] == "Test"
-        assert r["href"] == "https://example.com"
 
-    def test_get_with_default(self) -> None:
-        r = TextResult(title="Test")
-        assert r.get("title") == "Test"
-        assert r.get("nonexistent", "default") == "default"
+# ── NewsResult ─────────────────────────────────────────────────────────────
 
-    def test_contains(self) -> None:
-        r = TextResult(title="Test")
+
+class TestNewsResult:
+    """Test NewsResult."""
+
+    def test_creation(self):
+        r = NewsResult(title="News", url="http://news.com", source="CNN")
+        assert r.title == "News"
+        assert r.source == "CNN"
+
+    def test_len(self):
+        assert len(NewsResult()) == 6
+
+    def test_contains(self):
+        r = NewsResult()
         assert "title" in r
-        assert "nonexistent" not in r
+        assert "source" in r
 
-    def test_keys_values_items(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
-        assert "title" in r.keys()
-        assert "href" in r.keys()
-        assert "Test" in r.values()
-        items = dict(r.items())
-        assert items["title"] == "Test"
-
-    def test_iter_and_dict_conversion(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
-        d = dict(r)
-        assert d["title"] == "Test"
-        assert d["href"] == "https://example.com"
-
-    def test_len(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
-        assert len(r) == 3
-
-    def test_attribute_access(self) -> None:
-        r = TextResult(title="Test", href="https://example.com", body="Body")
-        assert r.title == "Test"
-        assert r.href == "https://example.com"
-        assert r.body == "Body"
+    def test_to_dict(self):
+        r = NewsResult(title="T", source="S")
+        d = r.to_dict()
+        assert d["source"] == "S"
 
 
-class TestResultsAggregator:
-    """Deduplication aggregator."""
-
-    def test_dedup(self) -> None:
-        agg = ResultsAggregator({"href"})
-        r1 = TextResult(title="A", href="https://a.com", body="Body A")
-        r2 = TextResult(title="A copy", href="https://a.com", body="Longer body A")
-        agg.append(r1)
-        agg.append(r2)
-        assert len(agg) == 1
-
-    def test_frequency_order(self) -> None:
-        agg = ResultsAggregator({"href"})
-        r1 = TextResult(title="A", href="https://a.com", body="A")
-        r2 = TextResult(title="B", href="https://b.com", body="B")
-        agg.append(r2)
-        agg.append(r1)
-        agg.append(r1)  # A appears twice
-        dicts = agg.extract_dicts()
-        assert dicts[0]["href"] == "https://a.com"
-
-    def test_extract_returns_objects(self) -> None:
-        agg = ResultsAggregator({"href"})
-        r1 = TextResult(title="A", href="https://a.com", body="A")
-        r2 = TextResult(title="B", href="https://b.com", body="B")
-        agg.append(r1)
-        agg.append(r2)
-        results = agg.extract()
-        assert isinstance(results[0], TextResult)
-        assert results[0].title == "A"
-
-    def test_empty_cache_fields_raises(self) -> None:
-        with pytest.raises(ValueError):
-            ResultsAggregator(set())
+# ── VideoResult ────────────────────────────────────────────────────────────
 
 
-# ---------------------------------------------------------------------------
-# Ranker
-# ---------------------------------------------------------------------------
+class TestVideoResult:
+    """Test VideoResult."""
+
+    def test_creation(self):
+        r = VideoResult(title="Vid", url="http://vid.com", duration="5:30")
+        assert r.title == "Vid"
+        assert r.duration == "5:30"
+
+    def test_len(self):
+        assert len(VideoResult()) == 7
+
+    def test_to_dict(self):
+        r = VideoResult(title="V", duration="1:00")
+        d = r.to_dict()
+        assert d["duration"] == "1:00"
 
 
-class TestRanker:
-    """Relevance ranker."""
-
-    def test_wikipedia_boost(self) -> None:
-        ranker = Ranker()
-        docs = [
-            TextResult(title="Regular", href="https://example.com", body="python info"),
-            TextResult(title="Python Wiki", href="https://en.wikipedia.org/wiki/Python", body="python"),
-        ]
-        ranked = ranker.rank(docs, "python")
-        assert "wikipedia" in ranked[0].href
-
-    def test_both_match_before_title_only(self) -> None:
-        ranker = Ranker()
-        docs = [
-            TextResult(title="Python", href="https://a.com", body="no match here"),
-            TextResult(title="Python tutorial", href="https://b.com", body="learn python"),
-        ]
-        ranked = ranker.rank(docs, "python")
-        assert ranked[0].href == "https://b.com"
-
-    def test_rank_with_dicts_backward_compat(self) -> None:
-        ranker = Ranker()
-        docs = [
-            {"title": "Regular", "href": "https://example.com", "body": "python info"},
-            {"title": "Python Wiki", "href": "https://en.wikipedia.org/wiki/Python", "body": "python"},
-        ]
-        ranked = ranker.rank(docs, "python")
-        assert "wikipedia" in ranked[0]["href"]
+# ── Exceptions ─────────────────────────────────────────────────────────────
 
 
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
+class TestExceptions:
+    """Test the exception hierarchy."""
 
+    def test_base_is_exception(self):
+        assert issubclass(GoogerException, Exception)
 
-class TestConfig:
-    """Configuration values."""
+    @pytest.mark.parametrize(
+        "exc_class",
+        [
+            HttpException,
+            TimeoutException,
+            RateLimitException,
+            ParseException,
+            QueryBuildException,
+            NoResultsException,
+        ],
+    )
+    def test_subclass_of_base(self, exc_class):
+        assert issubclass(exc_class, GoogerException)
 
-    def test_version(self) -> None:
-        assert VERSION  # non-empty string
-
-    def test_safesearch_map(self) -> None:
-        assert SAFESEARCH_MAP["on"] == "2"
-        assert SAFESEARCH_MAP["moderate"] == "1"
-        assert SAFESEARCH_MAP["off"] == "0"
-
-    def test_timelimit_map(self) -> None:
-        assert "d" in TIMELIMIT_MAP
-        assert "w" in TIMELIMIT_MAP
-        assert "m" in TIMELIMIT_MAP
-        assert "y" in TIMELIMIT_MAP
-
-
-# ---------------------------------------------------------------------------
-# Googer class — construction only (no network)
-# ---------------------------------------------------------------------------
-
-
-class TestGoogerInit:
-    """Googer initialization."""
-
-    def test_default_init(self) -> None:
-        g = Googer()
-        assert g is not None
-
-    def test_context_manager(self) -> None:
-        with Googer() as g:
-            assert g is not None
-
-    def test_empty_query_raises(self) -> None:
+    def test_catch_child_as_parent(self):
         with pytest.raises(GoogerException):
-            Googer().search("")
+            raise NoResultsException("test")
 
-    def test_query_object(self) -> None:
-        q = Query("test")
-        assert str(q) == "test"
-
-
-# ---------------------------------------------------------------------------
-# Query integration
-# ---------------------------------------------------------------------------
-
-
-class TestQueryIntegration:
-    """Query builder integration with Googer."""
-
-    def test_query_str_conversion(self) -> None:
-        q = Query("python").site("github.com").filetype("py")
-        assert "python" in str(q)
-        assert "site:github.com" in str(q)
-        assert "filetype:py" in str(q)
+    def test_exception_message(self):
+        try:
+            raise NoResultsException("no results here")
+        except GoogerException as e:
+            assert "no results here" in str(e)

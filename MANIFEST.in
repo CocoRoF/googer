@@ -1,4 +1,6 @@
 include LICENSE.md
 include README.md
 include pyproject.toml
-recursive-include googer py.typed
+include Cargo.toml
+recursive-include src *.rs
+recursive-include python py.typed *.pyi
