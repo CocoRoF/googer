@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ---------------------------------------------------------------------------
-  # Lint (Python + Rust)
+  # Lint (Python + Rust) — fast, no compilation
   # ---------------------------------------------------------------------------
   lint:
     runs-on: ubuntu-latest
@@ -25,6 +30,11 @@ jobs:
         with:
           components: clippy, rustfmt
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: lint
+
       - name: Rust fmt check
         run: cargo fmt --check
 
@@ -38,15 +48,24 @@ jobs:
           ruff format --check python/
 
   # ---------------------------------------------------------------------------
-  # Test across Python versions
+  # Test — reduced matrix (ubuntu + latest Python is the core gate)
   # ---------------------------------------------------------------------------
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-14, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          # Core: Linux with min and max Python
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.13"
+          # Spot-check other OS with one Python version
+          - os: macos-14
+            python-version: "3.12"
+          - os: windows-latest
+            python-version: "3.12"
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +76,11 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: test-${{ matrix.os }}
 
       - name: Install package and test deps
         run: |
