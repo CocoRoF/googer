@@ -43,3 +43,9 @@ Desktop.ini
 
 # Rust / Cargo
 target/
+
+# Compiled extension modules
+*.pyd
+*.so
+*.dylib
+*.pdb
