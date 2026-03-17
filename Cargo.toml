@@ -1,6 +1,6 @@
 [package]
 name = "googer"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 description = "A powerful, type-safe Google Search library for Python — powered by Rust."
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "socks", "cookies", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "socks", "cookies", "native-tls"] }
 scraper = "0.21"
 rand = "0.8"
 regex = "1"

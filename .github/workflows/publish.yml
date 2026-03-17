@@ -88,6 +88,7 @@ jobs:
     needs: [check-version, test]
     if: needs.check-version.outputs.version_changed == 'true'
     strategy:
+      fail-fast: false
       matrix:
         include:
           # ── Linux x86_64 ──
@@ -99,7 +100,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
             manylinux: auto
           # ── macOS x86_64 (Intel) ──
-          - os: macos-13
+          - os: macos-14
             target: x86_64-apple-darwin
             manylinux: "off"
           # ── macOS aarch64 (Apple Silicon) ──
@@ -122,10 +123,11 @@ jobs:
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
-            # Fix ring crate cross-compilation for aarch64
-            # The manylinux cross-compiler doesn't set __ARM_ARCH by default
-            if [ "$(uname -m)" != "aarch64" ]; then
-              export CFLAGS_aarch64_unknown_linux_gnu="-march=armv8-a"
+            # Ensure OpenSSL dev headers are available for native-tls
+            if command -v yum &> /dev/null; then
+              yum install -y openssl-devel perl-IPC-Cmd
+            elif command -v apk &> /dev/null; then
+              apk add --no-cache openssl-dev perl
             fi
 
       - name: Upload wheels
