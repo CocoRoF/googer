@@ -131,7 +131,7 @@ jobs:
           rust-toolchain: stable
           sccache: "true"
           before-script-linux: |
-            # Install Perl + C toolchain for vendored OpenSSL build
+            # Install Perl (needed by ring crate for generating assembly)
             if command -v yum &> /dev/null; then
               yum install -y perl-IPC-Cmd perl-core
             elif command -v apk &> /dev/null; then
