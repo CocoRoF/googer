@@ -30,20 +30,12 @@ static IOS_GSA_MAP: LazyLock<HashMap<&str, Vec<&str>>> = LazyLock::new(|| {
         ("26_1_0", vec!["411.0.879111500"]),
         (
             "26_2_0",
-            vec![
-                "396.0.833910942",
-                "409.0.872648028",
-                "411.0.879111500",
-            ],
+            vec!["396.0.833910942", "409.0.872648028", "411.0.879111500"],
         ),
         ("26_2_1", vec!["409.0.872648028", "411.0.879111500"]),
         (
             "26_3_0",
-            vec![
-                "406.0.862495628",
-                "410.0.875971614",
-                "411.0.879111500",
-            ],
+            vec!["406.0.862495628", "410.0.875971614", "411.0.879111500"],
         ),
         (
             "26_3_1",
@@ -85,10 +77,7 @@ pub fn get_gsa_user_agent() -> String {
 /// Return a random Chrome desktop User-Agent.
 pub fn get_chrome_user_agent() -> String {
     let mut rng = rand::thread_rng();
-    CHROME_DESKTOP_UAS
-        .choose(&mut rng)
-        .unwrap()
-        .to_string()
+    CHROME_DESKTOP_UAS.choose(&mut rng).unwrap().to_string()
 }
 
 /// Return a random User-Agent, weighted towards GSA strings (70%).

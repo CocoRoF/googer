@@ -68,11 +68,7 @@ impl HttpClient {
     }
 
     /// Perform a GET request with retries.
-    pub fn get(
-        &self,
-        url: &str,
-        params: &[(String, String)],
-    ) -> Result<Response, GoogerError> {
+    pub fn get(&self, url: &str, params: &[(String, String)]) -> Result<Response, GoogerError> {
         let mut last_err: Option<GoogerError> = None;
 
         for attempt in 1..=self.max_retries {
@@ -87,9 +83,7 @@ impl HttpClient {
             {
                 Ok(resp) => {
                     let status = resp.status().as_u16();
-                    let text = resp
-                        .text()
-                        .unwrap_or_default();
+                    let text = resp.text().unwrap_or_default();
                     let response = Response {
                         status_code: status,
                         text,
@@ -123,10 +117,7 @@ impl HttpClient {
         }
 
         Err(last_err.unwrap_or_else(|| {
-            GoogerError::Http(format!(
-                "Request failed after {} retries",
-                self.max_retries
-            ))
+            GoogerError::Http(format!("Request failed after {} retries", self.max_retries))
         }))
     }
 }

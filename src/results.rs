@@ -129,7 +129,11 @@ pub fn dedup_results<T: HasField + Clone>(items: Vec<T>, cache_fields: &[&str]) 
             .iter()
             .find_map(|f| {
                 let v = item.get_field(f);
-                if v.is_empty() { None } else { Some(v.to_string()) }
+                if v.is_empty() {
+                    None
+                } else {
+                    Some(v.to_string())
+                }
             })
             .unwrap_or_default();
         if key.is_empty() || seen.insert(key) {
@@ -287,19 +291,33 @@ impl PyImageResult {
     }
 
     #[getter]
-    fn title(&self) -> &str { &self.inner.title }
+    fn title(&self) -> &str {
+        &self.inner.title
+    }
     #[getter]
-    fn image(&self) -> &str { &self.inner.image }
+    fn image(&self) -> &str {
+        &self.inner.image
+    }
     #[getter]
-    fn thumbnail(&self) -> &str { &self.inner.thumbnail }
+    fn thumbnail(&self) -> &str {
+        &self.inner.thumbnail
+    }
     #[getter]
-    fn url(&self) -> &str { &self.inner.url }
+    fn url(&self) -> &str {
+        &self.inner.url
+    }
     #[getter]
-    fn height(&self) -> &str { &self.inner.height }
+    fn height(&self) -> &str {
+        &self.inner.height
+    }
     #[getter]
-    fn width(&self) -> &str { &self.inner.width }
+    fn width(&self) -> &str {
+        &self.inner.width
+    }
     #[getter]
-    fn source(&self) -> &str { &self.inner.source }
+    fn source(&self) -> &str {
+        &self.inner.source
+    }
 
     fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let dict = PyDict::new(py);
@@ -314,13 +332,26 @@ impl PyImageResult {
     }
 
     fn keys(&self) -> Vec<&str> {
-        vec!["title", "image", "thumbnail", "url", "height", "width", "source"]
+        vec![
+            "title",
+            "image",
+            "thumbnail",
+            "url",
+            "height",
+            "width",
+            "source",
+        ]
     }
 
     fn values(&self) -> Vec<&str> {
         vec![
-            &self.inner.title, &self.inner.image, &self.inner.thumbnail,
-            &self.inner.url, &self.inner.height, &self.inner.width, &self.inner.source,
+            &self.inner.title,
+            &self.inner.image,
+            &self.inner.thumbnail,
+            &self.inner.url,
+            &self.inner.height,
+            &self.inner.width,
+            &self.inner.source,
         ]
     }
 
@@ -356,13 +387,21 @@ impl PyImageResult {
     }
 
     fn __contains__(&self, key: &str) -> bool {
-        matches!(key, "title" | "image" | "thumbnail" | "url" | "height" | "width" | "source")
+        matches!(
+            key,
+            "title" | "image" | "thumbnail" | "url" | "height" | "width" | "source"
+        )
     }
 
-    fn __len__(&self) -> usize { 7 }
+    fn __len__(&self) -> usize {
+        7
+    }
 
     fn __repr__(&self) -> String {
-        format!("ImageResult(title={:?}, url={:?})", self.inner.title, self.inner.url)
+        format!(
+            "ImageResult(title={:?}, url={:?})",
+            self.inner.title, self.inner.url
+        )
     }
 }
 
@@ -398,17 +437,29 @@ impl PyNewsResult {
     }
 
     #[getter]
-    fn title(&self) -> &str { &self.inner.title }
+    fn title(&self) -> &str {
+        &self.inner.title
+    }
     #[getter]
-    fn url(&self) -> &str { &self.inner.url }
+    fn url(&self) -> &str {
+        &self.inner.url
+    }
     #[getter]
-    fn body(&self) -> &str { &self.inner.body }
+    fn body(&self) -> &str {
+        &self.inner.body
+    }
     #[getter]
-    fn source(&self) -> &str { &self.inner.source }
+    fn source(&self) -> &str {
+        &self.inner.source
+    }
     #[getter]
-    fn date(&self) -> &str { &self.inner.date }
+    fn date(&self) -> &str {
+        &self.inner.date
+    }
     #[getter]
-    fn image(&self) -> &str { &self.inner.image }
+    fn image(&self) -> &str {
+        &self.inner.image
+    }
 
     fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let dict = PyDict::new(py);
@@ -427,8 +478,12 @@ impl PyNewsResult {
 
     fn values(&self) -> Vec<&str> {
         vec![
-            &self.inner.title, &self.inner.url, &self.inner.body,
-            &self.inner.source, &self.inner.date, &self.inner.image,
+            &self.inner.title,
+            &self.inner.url,
+            &self.inner.body,
+            &self.inner.source,
+            &self.inner.date,
+            &self.inner.image,
         ]
     }
 
@@ -465,10 +520,15 @@ impl PyNewsResult {
         matches!(key, "title" | "url" | "body" | "source" | "date" | "image")
     }
 
-    fn __len__(&self) -> usize { 6 }
+    fn __len__(&self) -> usize {
+        6
+    }
 
     fn __repr__(&self) -> String {
-        format!("NewsResult(title={:?}, url={:?})", self.inner.title, self.inner.url)
+        format!(
+            "NewsResult(title={:?}, url={:?})",
+            self.inner.title, self.inner.url
+        )
     }
 }
 
@@ -491,8 +551,13 @@ impl PyVideoResult {
     #[new]
     #[pyo3(signature = (title="", url="", body="", duration="", source="", date="", thumbnail=""))]
     fn new(
-        title: &str, url: &str, body: &str, duration: &str,
-        source: &str, date: &str, thumbnail: &str,
+        title: &str,
+        url: &str,
+        body: &str,
+        duration: &str,
+        source: &str,
+        date: &str,
+        thumbnail: &str,
     ) -> Self {
         Self {
             inner: VideoResult {
@@ -508,19 +573,33 @@ impl PyVideoResult {
     }
 
     #[getter]
-    fn title(&self) -> &str { &self.inner.title }
+    fn title(&self) -> &str {
+        &self.inner.title
+    }
     #[getter]
-    fn url(&self) -> &str { &self.inner.url }
+    fn url(&self) -> &str {
+        &self.inner.url
+    }
     #[getter]
-    fn body(&self) -> &str { &self.inner.body }
+    fn body(&self) -> &str {
+        &self.inner.body
+    }
     #[getter]
-    fn duration(&self) -> &str { &self.inner.duration }
+    fn duration(&self) -> &str {
+        &self.inner.duration
+    }
     #[getter]
-    fn source(&self) -> &str { &self.inner.source }
+    fn source(&self) -> &str {
+        &self.inner.source
+    }
     #[getter]
-    fn date(&self) -> &str { &self.inner.date }
+    fn date(&self) -> &str {
+        &self.inner.date
+    }
     #[getter]
-    fn thumbnail(&self) -> &str { &self.inner.thumbnail }
+    fn thumbnail(&self) -> &str {
+        &self.inner.thumbnail
+    }
 
     fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let dict = PyDict::new(py);
@@ -535,13 +614,26 @@ impl PyVideoResult {
     }
 
     fn keys(&self) -> Vec<&str> {
-        vec!["title", "url", "body", "duration", "source", "date", "thumbnail"]
+        vec![
+            "title",
+            "url",
+            "body",
+            "duration",
+            "source",
+            "date",
+            "thumbnail",
+        ]
     }
 
     fn values(&self) -> Vec<&str> {
         vec![
-            &self.inner.title, &self.inner.url, &self.inner.body,
-            &self.inner.duration, &self.inner.source, &self.inner.date, &self.inner.thumbnail,
+            &self.inner.title,
+            &self.inner.url,
+            &self.inner.body,
+            &self.inner.duration,
+            &self.inner.source,
+            &self.inner.date,
+            &self.inner.thumbnail,
         ]
     }
 
@@ -577,12 +669,20 @@ impl PyVideoResult {
     }
 
     fn __contains__(&self, key: &str) -> bool {
-        matches!(key, "title" | "url" | "body" | "duration" | "source" | "date" | "thumbnail")
+        matches!(
+            key,
+            "title" | "url" | "body" | "duration" | "source" | "date" | "thumbnail"
+        )
     }
 
-    fn __len__(&self) -> usize { 7 }
+    fn __len__(&self) -> usize {
+        7
+    }
 
     fn __repr__(&self) -> String {
-        format!("VideoResult(title={:?}, url={:?})", self.inner.title, self.inner.url)
+        format!(
+            "VideoResult(title={:?}, url={:?})",
+            self.inner.title, self.inner.url
+        )
     }
 }

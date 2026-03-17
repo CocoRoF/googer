@@ -143,7 +143,7 @@ _common_options = [
 ]
 
 
-def _add_common_options(func):  # noqa: ANN001, ANN202
+def _add_common_options(func):
     """Decorator that adds common search options to a Click command."""
     for option in reversed(_common_options):
         func = option(func)
@@ -166,7 +166,7 @@ def safe_entry_point() -> None:
     logging.basicConfig(level=logging.WARNING)
     try:
         cli()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.secho(f"Error: {type(exc).__name__}: {exc}", fg="red", err=True)
         sys.exit(1)
 

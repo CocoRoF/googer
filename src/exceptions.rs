@@ -39,10 +39,45 @@ pub enum GoogerError {
 // Python exception classes
 // ---------------------------------------------------------------------------
 
-create_exception!(googer._core, PyGoogerException, PyException, "Base exception for all Googer errors.");
-create_exception!(googer._core, PyHttpException, PyGoogerException, "Raised when an HTTP request fails unexpectedly.");
-create_exception!(googer._core, PyTimeoutException, PyGoogerException, "Raised when a request exceeds the configured timeout.");
-create_exception!(googer._core, PyRateLimitException, PyGoogerException, "Raised when Google returns a rate-limit / CAPTCHA response.");
-create_exception!(googer._core, PyParseException, PyGoogerException, "Raised when HTML parsing fails to extract expected data.");
-create_exception!(googer._core, PyQueryBuildException, PyGoogerException, "Raised when a search query cannot be constructed.");
-create_exception!(googer._core, PyNoResultsException, PyGoogerException, "Raised when a search returns zero results.");
+create_exception!(
+    googer._core,
+    PyGoogerException,
+    PyException,
+    "Base exception for all Googer errors."
+);
+create_exception!(
+    googer._core,
+    PyHttpException,
+    PyGoogerException,
+    "Raised when an HTTP request fails unexpectedly."
+);
+create_exception!(
+    googer._core,
+    PyTimeoutException,
+    PyGoogerException,
+    "Raised when a request exceeds the configured timeout."
+);
+create_exception!(
+    googer._core,
+    PyRateLimitException,
+    PyGoogerException,
+    "Raised when Google returns a rate-limit / CAPTCHA response."
+);
+create_exception!(
+    googer._core,
+    PyParseException,
+    PyGoogerException,
+    "Raised when HTML parsing fails to extract expected data."
+);
+create_exception!(
+    googer._core,
+    PyQueryBuildException,
+    PyGoogerException,
+    "Raised when a search query cannot be constructed."
+);
+create_exception!(
+    googer._core,
+    PyNoResultsException,
+    PyGoogerException,
+    "Raised when a search returns zero results."
+);

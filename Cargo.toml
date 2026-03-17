@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-reqwest = { version = "0.12", features = ["blocking", "socks", "cookies"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "socks", "cookies", "rustls-tls"] }
 scraper = "0.21"
 rand = "0.8"
 regex = "1"
