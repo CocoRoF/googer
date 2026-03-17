@@ -123,15 +123,9 @@ pub fn build_region_params(region: &str) -> Vec<(String, String)> {
     };
 
     vec![
-        (
-            "hl".to_string(),
-            format!("{}-{}", lang, country.to_uppercase()),
-        ),
+        ("hl".to_string(), lang.clone()),
         ("lr".to_string(), format!("lang_{lang}")),
-        (
-            "cr".to_string(),
-            format!("country{}", country.to_uppercase()),
-        ),
+        ("gl".to_string(), country.to_uppercase()),
     ]
 }
 

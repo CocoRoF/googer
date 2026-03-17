@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "googer"
-version = "0.2.5"
+version = "0.2.6"
 description = "A powerful, type-safe Google Search library for Python — powered by Rust."
 readme = "README.md"
 requires-python = ">=3.10"

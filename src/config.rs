@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 pub static SAFESEARCH_MAP: LazyLock<HashMap<&str, &str>> =
-    LazyLock::new(|| HashMap::from([("on", "2"), ("moderate", "1"), ("off", "0")]));
+    LazyLock::new(|| HashMap::from([("on", "active"), ("moderate", "moderate"), ("off", "off")]));
 
 pub static TIMELIMIT_MAP: LazyLock<HashMap<&str, &str>> =
     LazyLock::new(|| HashMap::from([("h", "h"), ("d", "d"), ("w", "w"), ("m", "m"), ("y", "y")]));

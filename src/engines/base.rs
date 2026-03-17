@@ -19,8 +19,8 @@ pub fn build_base_params(
     let safe_val = SAFESEARCH_MAP
         .get(safesearch.to_lowercase().as_str())
         .copied()
-        .unwrap_or("1");
-    params.push(("filter".to_string(), safe_val.to_string()));
+        .unwrap_or("moderate");
+    params.push(("safe".to_string(), safe_val.to_string()));
 
     let start = (page.saturating_sub(1)) * RESULTS_PER_PAGE;
     params.push(("start".to_string(), start.to_string()));
