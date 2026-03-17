@@ -41,8 +41,5 @@ pub fn first_text(element: &scraper::ElementRef, selector: &Selector) -> String 
 pub fn select_items(html: &str, items_selector: &str) -> Vec<String> {
     let document = Html::parse_document(html);
     let selector = Selector::parse(items_selector).unwrap();
-    document
-        .select(&selector)
-        .map(|el| el.html())
-        .collect()
+    document.select(&selector).map(|el| el.html()).collect()
 }

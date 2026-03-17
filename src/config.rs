@@ -17,17 +17,14 @@ pub const RESULTS_PER_PAGE: usize = 10;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-pub static SAFESEARCH_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
-    HashMap::from([("on", "2"), ("moderate", "1"), ("off", "0")])
-});
+pub static SAFESEARCH_MAP: LazyLock<HashMap<&str, &str>> =
+    LazyLock::new(|| HashMap::from([("on", "2"), ("moderate", "1"), ("off", "0")]));
 
-pub static TIMELIMIT_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
-    HashMap::from([("h", "h"), ("d", "d"), ("w", "w"), ("m", "m"), ("y", "y")])
-});
+pub static TIMELIMIT_MAP: LazyLock<HashMap<&str, &str>> =
+    LazyLock::new(|| HashMap::from([("h", "h"), ("d", "d"), ("w", "w"), ("m", "m"), ("y", "y")]));
 
-pub static IMAGE_SIZE_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
-    HashMap::from([("large", "isz:l"), ("medium", "isz:m"), ("icon", "isz:i")])
-});
+pub static IMAGE_SIZE_MAP: LazyLock<HashMap<&str, &str>> =
+    LazyLock::new(|| HashMap::from([("large", "isz:l"), ("medium", "isz:m"), ("icon", "isz:i")]));
 
 pub static IMAGE_COLOR_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
     HashMap::from([
@@ -48,16 +45,11 @@ pub static IMAGE_TYPE_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
     ])
 });
 
-pub static IMAGE_LICENSE_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
-    HashMap::from([
-        ("creative_commons", "il:cl"),
-        ("commercial", "il:ol"),
-    ])
-});
+pub static IMAGE_LICENSE_MAP: LazyLock<HashMap<&str, &str>> =
+    LazyLock::new(|| HashMap::from([("creative_commons", "il:cl"), ("commercial", "il:ol")]));
 
-pub static VIDEO_DURATION_MAP: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| {
-    HashMap::from([("short", "dur:s"), ("medium", "dur:m"), ("long", "dur:l")])
-});
+pub static VIDEO_DURATION_MAP: LazyLock<HashMap<&str, &str>> =
+    LazyLock::new(|| HashMap::from([("short", "dur:s"), ("medium", "dur:m"), ("long", "dur:l")]));
 
 pub const TBM_NEWS: &str = "nws";
 pub const TBM_IMAGES: &str = "isch";

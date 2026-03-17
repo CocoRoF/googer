@@ -65,8 +65,8 @@ impl PyGooger {
         let http =
             http_client::HttpClient::new(resolved_proxy.as_deref(), timeout, verify, max_retries)
                 .map_err(|e| {
-                    PyGoogerException::new_err(format!("Failed to create HTTP client: {e}"))
-                })?;
+                PyGoogerException::new_err(format!("Failed to create HTTP client: {e}"))
+            })?;
         Ok(Self {
             http,
             ranker: ranker::Ranker::new(3),
@@ -87,6 +87,7 @@ impl PyGooger {
     }
 
     /// Perform a Google web/text search.
+    #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (query, *, region="us-en", safesearch="moderate", timelimit=None, max_results=10, page=1, rank=true))]
     fn search(
         &self,
@@ -95,8 +96,7 @@ impl PyGooger {
         safesearch: &str,
         timelimit: Option<&str>,
         max_results: usize,
-        #[allow(unused_variables)]
-        page: usize,
+        #[allow(unused_variables)] page: usize,
         rank: bool,
     ) -> PyResult<Vec<PyTextResult>> {
         let query_str = query.trim();
@@ -107,7 +107,14 @@ impl PyGooger {
         }
         let engine = GoogleTextEngine;
         let raw = engine
-            .search_pages(&self.http, query_str, region, safesearch, timelimit, max_results)
+            .search_pages(
+                &self.http,
+                query_str,
+                region,
+                safesearch,
+                timelimit,
+                max_results,
+            )
             .map_err(|e| PyGoogerException::new_err(e.to_string()))?;
         if raw.is_empty() {
             return Err(PyNoResultsException::new_err(format!(
@@ -125,6 +132,7 @@ impl PyGooger {
     }
 
     /// Perform a Google image search.
+    #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (query, *, region="us-en", safesearch="moderate", timelimit=None, max_results=10, size=None, color=None, image_type=None, license_type=None))]
     fn images(
         &self,
@@ -151,7 +159,14 @@ impl PyGooger {
             license_type: license_type.map(String::from),
         };
         let raw = engine
-            .search_pages(&self.http, query_str, region, safesearch, timelimit, max_results)
+            .search_pages(
+                &self.http,
+                query_str,
+                region,
+                safesearch,
+                timelimit,
+                max_results,
+            )
             .map_err(|e| PyGoogerException::new_err(e.to_string()))?;
         if raw.is_empty() {
             return Err(PyNoResultsException::new_err(format!(
@@ -182,7 +197,14 @@ impl PyGooger {
         }
         let engine = GoogleNewsEngine;
         let raw = engine
-            .search_pages(&self.http, query_str, region, safesearch, timelimit, max_results)
+            .search_pages(
+                &self.http,
+                query_str,
+                region,
+                safesearch,
+                timelimit,
+                max_results,
+            )
             .map_err(|e| PyGoogerException::new_err(e.to_string()))?;
         if raw.is_empty() {
             return Err(PyNoResultsException::new_err(format!(
@@ -216,7 +238,14 @@ impl PyGooger {
             duration: duration.map(String::from),
         };
         let raw = engine
-            .search_pages(&self.http, query_str, region, safesearch, timelimit, max_results)
+            .search_pages(
+                &self.http,
+                query_str,
+                region,
+                safesearch,
+                timelimit,
+                max_results,
+            )
             .map_err(|e| PyGoogerException::new_err(e.to_string()))?;
         if raw.is_empty() {
             return Err(PyNoResultsException::new_err(format!(

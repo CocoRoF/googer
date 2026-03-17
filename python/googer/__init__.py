@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 
 try:
     __version__ = _pkg_version("googer")
-except Exception:  # noqa: BLE001
+except Exception:
     __version__ = "0.0.0"
 __all__ = (
     "Googer",
@@ -53,18 +53,18 @@ logging.getLogger("googer").addHandler(logging.NullHandler())
 if TYPE_CHECKING:
     from ._core import (
         Googer,
-        ImageResult,
-        NewsResult,
-        Query,
-        TextResult,
-        VideoResult,
         GoogerException,
         HttpException,
-        TimeoutException,
-        RateLimitException,
-        ParseException,
-        QueryBuildException,
+        ImageResult,
+        NewsResult,
         NoResultsException,
+        ParseException,
+        Query,
+        QueryBuildException,
+        RateLimitException,
+        TextResult,
+        TimeoutException,
+        VideoResult,
     )
 
 

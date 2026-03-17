@@ -197,9 +197,7 @@ impl PyQuery {
 
     /// Compile the query into a Google-compatible search string.
     fn build(&self) -> PyResult<String> {
-        self.inner
-            .build()
-            .map_err(|e| PyQueryBuildException::new_err(e))
+        self.inner.build().map_err(PyQueryBuildException::new_err)
     }
 
     fn __str__(&self) -> PyResult<String> {

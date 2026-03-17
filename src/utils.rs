@@ -123,9 +123,15 @@ pub fn build_region_params(region: &str) -> Vec<(String, String)> {
     };
 
     vec![
-        ("hl".to_string(), format!("{}-{}", lang, country.to_uppercase())),
+        (
+            "hl".to_string(),
+            format!("{}-{}", lang, country.to_uppercase()),
+        ),
         ("lr".to_string(), format!("lang_{lang}")),
-        ("cr".to_string(), format!("country{}", country.to_uppercase())),
+        (
+            "cr".to_string(),
+            format!("country{}", country.to_uppercase()),
+        ),
     ]
 }
 
@@ -137,7 +143,14 @@ pub fn build_region_params(region: &str) -> Vec<(String, String)> {
 const URL_FIELDS: &[&str] = &["href", "url", "thumbnail", "image"];
 /// Fields that use text normalization
 const TEXT_FIELDS: &[&str] = &[
-    "title", "body", "description", "snippet", "author", "publisher", "source", "content",
+    "title",
+    "body",
+    "description",
+    "snippet",
+    "author",
+    "publisher",
+    "source",
+    "content",
 ];
 /// Fields that use date normalization
 const DATE_FIELDS: &[&str] = &["date"];

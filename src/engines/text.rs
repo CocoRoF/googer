@@ -3,7 +3,10 @@
 use log::warn;
 use scraper::{Html, Selector};
 
-use crate::config::{GOOGLE_TEXT_URL, TEXT_BODY_SELECTOR, TEXT_HREF_SELECTOR, TEXT_ITEMS_SELECTOR, TEXT_TITLE_SELECTOR, TIMELIMIT_MAP};
+use crate::config::{
+    GOOGLE_TEXT_URL, TEXT_BODY_SELECTOR, TEXT_HREF_SELECTOR, TEXT_ITEMS_SELECTOR,
+    TEXT_TITLE_SELECTOR, TIMELIMIT_MAP,
+};
 use crate::exceptions::GoogerError;
 use crate::http_client::HttpClient;
 use crate::parser::{first_attr, first_text};

@@ -53,7 +53,7 @@ pub trait SearchEngine<T> {
         max_results: usize,
     ) -> Result<Vec<T>, GoogerError> {
         let mut all_results: Vec<T> = Vec::new();
-        let pages_needed = (max_results + RESULTS_PER_PAGE - 1) / RESULTS_PER_PAGE;
+        let pages_needed = max_results.div_ceil(RESULTS_PER_PAGE);
 
         for page in 1..=pages_needed {
             let batch = self.search(http, query, region, safesearch, timelimit, page)?;
