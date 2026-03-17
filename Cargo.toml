@@ -23,3 +23,7 @@ unicode-normalization = "0.1"
 thiserror = "2"
 log = "0.4"
 pyo3-log = "0.12"
+
+# Vendor OpenSSL on Linux to avoid version mismatches in manylinux containers
+[target.'cfg(target_os = "linux")'.dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
