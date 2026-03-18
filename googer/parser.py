@@ -68,7 +68,8 @@ class GoogleParser:
             result = result_cls()
             for field_name, xpath_expr in self.elements_xpath.items():
                 parts = (x.strip() for x in item.xpath(xpath_expr))
-                data = " ".join("".join(parts).split())
+                # Join with spaces (text nodes from separate elements need separators)
+                data = " ".join(" ".join(parts).split())
                 if data:
                     setattr(result, field_name, data)
             results.append(result)

@@ -22,7 +22,6 @@ from .config import (
     RETRY_BACKOFF_FACTOR,
 )
 from .exceptions import HttpException, RateLimitException, TimeoutException
-from .user_agents import get_gsa_user_agent
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +90,9 @@ class HttpClient:
             ca_cert_file=verify if isinstance(verify, str) else None,
         )
 
-        # Set a GSA User-Agent header by default
-        self.client.headers_update({"User-Agent": get_gsa_user_agent()})
+        # Let primp's impersonation handle User-Agent automatically.
+        # Overriding with a mismatched UA (e.g. GSA/iOS) while the TLS
+        # fingerprint says Chrome causes Google to return 403.
 
     # -- header management --------------------------------------------------
 
@@ -101,8 +101,18 @@ class HttpClient:
         self.client.headers_update(headers)
 
     def rotate_user_agent(self) -> None:
-        """Replace the current User-Agent with a freshly generated one."""
-        self.client.headers_update({"User-Agent": get_gsa_user_agent()})
+        """Rotate TLS fingerprint by re-creating the underlying client."""
+        # Re-creating the client gives a new random impersonation profile
+        # (TLS fingerprint + matching User-Agent), avoiding the mismatch
+        # that occurs when only swapping the UA header.
+        old = self.client
+        self.client = primp.Client(
+            proxy=getattr(old, '_proxy', None),
+            timeout=self._timeout,
+            impersonate=DEFAULT_IMPERSONATE,
+            impersonate_os=DEFAULT_IMPERSONATE_OS,
+            verify=True,
+        )
 
     # -- core request -------------------------------------------------------
 
@@ -133,6 +143,17 @@ class HttpClient:
                     content=resp.content,
                     text=resp.text,
                 )
+
+                # Forbidden / bot-detection
+                if wrapped.status_code == 403:  # noqa: PLR2004
+                    logger.warning("403 Forbidden (attempt %d/%d) — rotating identity", attempt, self._max_retries)
+                    if attempt < self._max_retries:
+                        self.rotate_user_agent()
+                        self._backoff(attempt)
+                        continue
+                    raise RateLimitException(
+                        "Google returned 403 Forbidden. Try again later or use a proxy."
+                    )
 
                 # Rate-limit / CAPTCHA detection
                 if self._is_rate_limited(wrapped):

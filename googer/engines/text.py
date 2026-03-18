@@ -16,8 +16,9 @@ from .base import BaseEngine
 class GoogleTextEngine(BaseEngine[TextResult]):
     """Google web/text search engine.
 
-    Parses the standard Google SERP using data-snc divs which are
-    present in the GSA (mobile) layout.
+    Parses the browser-rendered Google SERP using ``tF2Cxc`` divs
+    which contain individual search results with titles, links,
+    and snippets.
     """
 
     name: ClassVar[str] = "text"
