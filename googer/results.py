@@ -101,6 +101,7 @@ class TextResult(BaseResult):
     title: str = ""
     href: str = ""
     body: str = ""
+    provider: str = ""
 
 
 @dataclass
@@ -114,6 +115,7 @@ class ImageResult(BaseResult):
     height: str = ""
     width: str = ""
     source: str = ""
+    provider: str = ""
 
 
 @dataclass
@@ -126,6 +128,7 @@ class NewsResult(BaseResult):
     source: str = ""
     date: str = ""
     image: str = ""
+    provider: str = ""
 
 
 @dataclass
@@ -139,6 +142,27 @@ class VideoResult(BaseResult):
     source: str = ""
     date: str = ""
     thumbnail: str = ""
+    provider: str = ""
+
+
+@dataclass
+class AnswerResult(BaseResult):
+    """An instant answer result (from DuckDuckGo Instant Answer API)."""
+
+    heading: str = ""
+    abstract: str = ""
+    url: str = ""
+    source: str = ""
+    answer: str = ""
+    answer_type: str = ""
+    image: str = ""
+    related: list[dict[str, str]] | None = None  # type: ignore[assignment]
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Apply normaliser for string fields only."""
+        if isinstance(value, str) and value and (normalizer := self._normalizers.get(name)):
+            value = normalizer(value)
+        object.__setattr__(self, name, value)
 
 
 # ---------------------------------------------------------------------------

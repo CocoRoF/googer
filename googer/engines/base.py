@@ -56,8 +56,8 @@ class BaseEngine(ABC, Generic[T]):
     name: ClassVar[str]
     search_url: ClassVar[str]
     result_type: ClassVar[type[BaseResult]]
-    items_xpath: ClassVar[str]
-    elements_xpath: ClassVar[dict[str, str]]
+    items_xpath: ClassVar[str] = ""
+    elements_xpath: ClassVar[dict[str, str]] = {}
     search_method: ClassVar[str] = "GET"
     extra_headers: ClassVar[dict[str, str]] = {}
 
@@ -65,10 +65,13 @@ class BaseEngine(ABC, Generic[T]):
         self._http = http_client
         if self.extra_headers:
             self._http.update_headers(self.extra_headers)
-        self._parser = GoogleParser(
-            items_xpath=self.items_xpath,
-            elements_xpath=self.elements_xpath,
-        )
+        if self.items_xpath and self.elements_xpath:
+            self._parser: GoogleParser | None = GoogleParser(
+                items_xpath=self.items_xpath,
+                elements_xpath=self.elements_xpath,
+            )
+        else:
+            self._parser = None
 
     # -- abstract -----------------------------------------------------------
 
@@ -144,6 +147,9 @@ class BaseEngine(ABC, Generic[T]):
         resp = self._make_request(params)
         if not resp or not resp.ok:
             logger.warning("Engine %s returned status %s", self.name, resp.status_code if resp else "None")
+            return []
+
+        if self._parser is None:
             return []
 
         results = self._parser.parse(resp.text, self.result_type)  # type: ignore[arg-type]

@@ -2,14 +2,19 @@
 
 Provides a ``googer`` command-line tool built with Click.
 Supports text, image, news, and video search with formatted output
-and optional JSON/CSV export.
+and optional JSON/CSV export.  Supports DuckDuckGo, Brave Search,
+and Google with automatic fallback, multi-engine concurrent search,
+suggestions, and instant answers.
 
 Usage::
 
     googer search "python programming" --max-results 5
+    googer search "python" --engine multi
     googer news "artificial intelligence" --timelimit d
     googer images "cute cats" --size large
     googer videos "python tutorial" --duration short
+    googer suggest "python prog"
+    googer answers "python programming language"
 
 """
 
@@ -139,6 +144,20 @@ _common_options = [
     ),
     click.option("--proxy", default=None, help="Proxy URL (http/https/socks5 or 'tb' for Tor)."),
     click.option("--timeout", default=10, type=int, show_default=True, help="Request timeout in seconds."),
+    click.option(
+        "--engine",
+        type=click.Choice(["auto", "multi", "duckduckgo", "brave", "google", "ecosia", "yahoo", "aol", "naver"]),
+        default="auto",
+        show_default=True,
+        help="Search engine provider.",
+    ),
+    click.option(
+        "--backend",
+        type=click.Choice(["http", "browser"]),
+        default="http",
+        show_default=True,
+        help="HTTP backend (browser needed for Google).",
+    ),
     click.option("-o", "--output", default=None, help="Save results to file (.json or .csv)."),
     click.option("--no-color", is_flag=True, help="Disable coloured output."),
 ]
@@ -159,7 +178,7 @@ def _add_common_options(func):  # noqa: ANN001, ANN202
 @click.group()
 @click.version_option(version=__version__, prog_name="googer")
 def cli() -> None:
-    """Googer — A powerful Google Search CLI."""
+    """Googer \u2014 A powerful multi-engine search CLI."""
 
 
 def safe_entry_point() -> None:
@@ -187,11 +206,13 @@ def search(
     max_results: int,
     proxy: str | None,
     timeout: int,
+    engine: str,
+    backend: str,
     output: str | None,
     no_color: bool,
 ) -> None:
-    """Perform a Google web/text search."""
-    g = Googer(proxy=proxy, timeout=timeout)
+    """Perform a web/text search."""
+    g = Googer(proxy=proxy, timeout=timeout, engine=engine, backend=backend)
     results = g.search(
         query,
         region=region,
@@ -226,6 +247,8 @@ def images(
     max_results: int,
     proxy: str | None,
     timeout: int,
+    engine: str,
+    backend: str,
     output: str | None,
     no_color: bool,
     size: str | None,
@@ -233,8 +256,8 @@ def images(
     image_type: str | None,
     license_type: str | None,
 ) -> None:
-    """Perform a Google image search."""
-    g = Googer(proxy=proxy, timeout=timeout)
+    """Perform an image search."""
+    g = Googer(proxy=proxy, timeout=timeout, engine=engine, backend=backend)
     results = g.images(
         query,
         region=region,
@@ -260,11 +283,13 @@ def news(
     max_results: int,
     proxy: str | None,
     timeout: int,
+    engine: str,
+    backend: str,
     output: str | None,
     no_color: bool,
 ) -> None:
-    """Perform a Google news search."""
-    g = Googer(proxy=proxy, timeout=timeout)
+    """Perform a news search."""
+    g = Googer(proxy=proxy, timeout=timeout, engine=engine, backend=backend)
     results = g.news(
         query,
         region=region,
@@ -291,12 +316,14 @@ def videos(
     max_results: int,
     proxy: str | None,
     timeout: int,
+    engine: str,
+    backend: str,
     output: str | None,
     no_color: bool,
     duration: str | None,
 ) -> None:
-    """Perform a Google video search."""
-    g = Googer(proxy=proxy, timeout=timeout)
+    """Perform a video search."""
+    g = Googer(proxy=proxy, timeout=timeout, engine=engine, backend=backend)
     results = g.videos(
         query,
         region=region,
@@ -313,3 +340,44 @@ def videos(
 def version() -> None:
     """Print the Googer version."""
     click.echo(__version__)
+
+
+@cli.command()
+@click.option("-q", "--query", required=True, help="Partial search query.")
+@click.option("-r", "--region", default="us-en", show_default=True, help="Region code.")
+@click.option("--no-color", is_flag=True, help="Disable coloured output.")
+def suggest(query: str, region: str, no_color: bool) -> None:
+    """Get autocomplete suggestions for a query."""
+    g = Googer()
+    suggestions = g.suggest(query, region=region)
+    if not suggestions:
+        click.echo("No suggestions found.")
+        return
+    for i, s in enumerate(suggestions, start=1):
+        color = "white" if no_color else "cyan"
+        click.secho(f"  {i}. {s}", fg=color)
+
+
+@cli.command()
+@click.option("-q", "--query", required=True, help="Search query for instant answer.")
+@click.option("--no-color", is_flag=True, help="Disable coloured output.")
+def answers(query: str, no_color: bool) -> None:
+    """Get an instant answer for a query."""
+    g = Googer()
+    answer = g.answers(query)
+    if answer is None:
+        click.echo("No instant answer found.")
+        return
+    if answer.heading:
+        click.secho(f"\n  {answer.heading}", fg="white" if no_color else "bright_white", bold=True)
+    if answer.abstract:
+        text = click.wrap_text(answer.abstract, width=78, initial_indent="  ", subsequent_indent="  ")
+        click.secho(text, fg="white" if no_color else "cyan")
+    if answer.url:
+        click.secho(f"  Source: {answer.url}", fg="white" if no_color else "green")
+    if answer.answer:
+        click.secho(f"  Answer: {answer.answer}", fg="white" if no_color else "yellow")
+    if answer.related:
+        click.secho("\n  Related:", fg="white" if no_color else "bright_white", bold=True)
+        for topic in answer.related[:5]:
+            click.secho(f"    - {topic.get('text', '')[:100]}", fg="white" if no_color else "magenta")
