@@ -1,1 +1,0 @@
-"""googer test suite."""

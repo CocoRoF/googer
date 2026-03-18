@@ -40,12 +40,3 @@ Desktop.ini
 
 # Ruff
 .ruff_cache/
-
-# Rust / Cargo
-target/
-
-# Compiled extension modules
-*.pyd
-*.so
-*.dylib
-*.pdb
