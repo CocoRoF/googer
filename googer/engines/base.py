@@ -6,7 +6,9 @@ may override any of the hook methods.
 """
 
 import logging
+import time
 from abc import ABC, abstractmethod
+from random import uniform
 from typing import Any, ClassVar, Generic, TypeVar
 
 from ..config import (
@@ -16,6 +18,7 @@ from ..config import (
     RESULTS_PER_PAGE,
     SAFESEARCH_MAP,
 )
+from ..exceptions import RateLimitException, TimeoutException
 from ..http_client import HttpClient, Response
 from ..parser import GoogleParser
 from ..results import BaseResult
@@ -23,6 +26,10 @@ from ..utils import build_region_params
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseResult)
+
+# Type alias for any client that provides .get()/.post()/.update_headers()
+# (HttpClient or BrowserClient — duck-typed).
+_Client = Any
 
 
 class BaseEngine(ABC, Generic[T]):
@@ -41,6 +48,9 @@ class BaseEngine(ABC, Generic[T]):
     * ``search_method`` — ``"GET"`` (default) or ``"POST"``.
     * ``extra_headers`` — Extra HTTP headers merged into each request.
 
+    The *http_client* parameter accepts either an :class:`HttpClient`
+    or a :class:`~googer.browser_client.BrowserClient` (duck-typed).
+
     """
 
     name: ClassVar[str]
@@ -51,7 +61,7 @@ class BaseEngine(ABC, Generic[T]):
     search_method: ClassVar[str] = "GET"
     extra_headers: ClassVar[dict[str, str]] = {}
 
-    def __init__(self, http_client: HttpClient) -> None:
+    def __init__(self, http_client: _Client) -> None:
         self._http = http_client
         if self.extra_headers:
             self._http.update_headers(self.extra_headers)
@@ -168,6 +178,12 @@ class BaseEngine(ABC, Generic[T]):
         pages_needed = (max_results + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
 
         for page in range(1, pages_needed + 1):
+            # Randomised delay between pages to avoid rate limiting
+            if page > 1:
+                delay = uniform(1.5, 3.5)
+                logger.debug("Sleeping %.2fs between pages", delay)
+                time.sleep(delay)
+
             batch = self.search(
                 query=query,
                 region=region,
@@ -192,6 +208,8 @@ class BaseEngine(ABC, Generic[T]):
             if self.search_method == "GET":
                 return self._http.get(self.search_url, params=params)
             return self._http.post(self.search_url, data=params)
+        except (RateLimitException, TimeoutException):
+            raise
         except Exception:
             logger.exception("Request failed for engine %s", self.name)
             return None

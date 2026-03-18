@@ -102,13 +102,13 @@ TBM_IMAGES: Final[str] = "isch"
 TBM_VIDEOS: Final[str] = "vid"
 
 # ---------------------------------------------------------------------------
-# XPath selectors — Text search
+# XPath selectors — Text search (browser-rendered HTML)
 # ---------------------------------------------------------------------------
-TEXT_ITEMS_XPATH: Final[str] = "//div[@data-snc]"
+TEXT_ITEMS_XPATH: Final[str] = "//div[contains(@class, 'tF2Cxc')]"
 TEXT_ELEMENTS_XPATH: Final[dict[str, str]] = {
-    "title": ".//div[@role='link']//text()",
-    "href": ".//a/@href",
-    "body": "./div[@data-sncf]//text()",
+    "title": ".//h3//text()",
+    "href": ".//h3/ancestor::a/@href",
+    "body": ".//div[contains(@class, 'VwiC3b')]//text()",
 }
 
 # ---------------------------------------------------------------------------

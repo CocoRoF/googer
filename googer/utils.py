@@ -82,7 +82,8 @@ def extract_clean_url(raw_url: str) -> str:
     """Extract the actual destination URL from a Google redirect URL.
 
     Google wraps outbound links in ``/url?q=<target>&...``.
-    This function extracts ``<target>``.
+    This function extracts ``<target>`` and strips Google's
+    ``#:~:text=`` highlight fragments.
 
     Args:
         raw_url: Possibly-wrapped Google redirect URL.
@@ -93,8 +94,14 @@ def extract_clean_url(raw_url: str) -> str:
     """
     if raw_url.startswith("/url?q="):
         url = raw_url.split("?q=", 1)[1].split("&", 1)[0]
-        return normalize_url(url)
-    return normalize_url(raw_url)
+        return _strip_text_fragment(normalize_url(url))
+    return _strip_text_fragment(normalize_url(raw_url))
+
+
+def _strip_text_fragment(url: str) -> str:
+    """Remove ``#:~:text=...`` fragments appended by Google."""
+    idx = url.find("#:~:text=")
+    return url[:idx] if idx != -1 else url
 
 
 def expand_proxy_alias(proxy: str | None) -> str | None:

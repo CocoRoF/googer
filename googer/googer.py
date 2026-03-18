@@ -9,8 +9,12 @@ Example::
 
     from googer import Googer
 
+    # Browser backend (default) — renders Google's JS pages
     g = Googer()
     results = g.search("python programming")
+
+    # HTTP-only backend (lightweight, may not work with Google)
+    g = Googer(backend="http")
 
     # With advanced query
     from googer import Googer, Query
@@ -24,8 +28,8 @@ Example::
 
 import logging
 import os
+from typing import Any, Literal
 from types import TracebackType
-from typing import Any
 
 from .config import (
     DEFAULT_MAX_RESULTS,
@@ -61,12 +65,26 @@ class Googer:
             Special shorthand ``"tb"`` expands to the Tor Browser SOCKS5 proxy.
         timeout: Request timeout in seconds.  Defaults to 10.
         verify: SSL verification — ``True``, ``False``, or path to a PEM file.
+            Ignored when *backend* is ``"browser"``.
         max_retries: Maximum number of retry attempts per request.
+            Only used with the ``"http"`` backend.
+        backend: Client backend to use:
+
+            * ``"browser"`` (default) — launches a Chromium browser via
+              patchright to render Google's JavaScript-heavy pages.
+              Requires ``pip install googer[browser]`` and ``patchright install chromium``.
+            * ``"http"`` — lightweight HTTP-only mode using primp with TLS
+              fingerprint impersonation.  May not work with Google's
+              current JS-only serving strategy.
+        headless: Run the browser without a visible window.
+            Defaults to ``True``.  Only used when *backend* is ``"browser"``.
+            Set to ``False`` for debugging or manual CAPTCHA solving.
 
     Example::
 
         >>> from googer import Googer
-        >>> results = Googer().search("python", max_results=5)
+        >>> with Googer() as g:
+        ...     results = g.search("python", max_results=5)
 
     """
 
@@ -77,14 +95,28 @@ class Googer:
         *,
         verify: bool | str = True,
         max_retries: int = 3,
+        backend: Literal["browser", "http"] = "browser",
+        headless: bool = True,
     ) -> None:
         resolved_proxy = expand_proxy_alias(proxy) or os.environ.get("GOOGER_PROXY")
-        self._http = HttpClient(
-            proxy=resolved_proxy,
-            timeout=timeout,
-            verify=verify,
-            max_retries=max_retries,
-        )
+        self._backend = backend
+
+        if backend == "browser":
+            from .browser_client import BrowserClient  # noqa: PLC0415
+
+            self._http: Any = BrowserClient(
+                proxy=resolved_proxy,
+                timeout=timeout,
+                headless=headless,
+            )
+        else:
+            self._http = HttpClient(
+                proxy=resolved_proxy,
+                timeout=timeout,
+                verify=verify,
+                max_retries=max_retries,
+            )
+
         self._engine_cache: dict[str, BaseEngine[Any]] = {}
         self._ranker = Ranker()
 
@@ -100,7 +132,13 @@ class Googer:
         exc_val: BaseException | None = None,
         exc_tb: TracebackType | None = None,
     ) -> None:
-        """Exit the context manager."""
+        """Exit the context manager and clean up resources."""
+        self.close()
+
+    def close(self) -> None:
+        """Release underlying client resources (browser, HTTP session)."""
+        if hasattr(self._http, "close"):
+            self._http.close()
 
     # -- engine management --------------------------------------------------
 
