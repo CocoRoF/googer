@@ -1,6 +1,6 @@
 # Browser / JS Rendering Research for Google Search Scraping (2025-2026)
 
-> **Date:** March 18, 2026  
+> **Date:** March 18, 2026
 > **Context:** googer library currently uses `primp` (HTTP-only with TLS impersonation). Google now serves 100% JS-rendered pages, returning empty `<noscript>` shells to HTTP-only clients.
 
 ---
@@ -355,7 +355,7 @@ html = google_search("python programming")
 # googer/browser_client.py — optional browser-based client
 """Browser-based HTTP client for JS-rendered pages.
 
-Requires: pip install googer[browser]  
+Requires: pip install googer[browser]
 Which installs: patchright
 
 Usage is transparent — falls back from primp to browser automatically.
@@ -363,13 +363,13 @@ Usage is transparent — falls back from primp to browser automatically.
 
 class BrowserClient:
     """Headless browser client using patchright for JS rendering."""
-    
+
     def __init__(self, headless=True, channel="chrome"):
         self._headless = headless
         self._channel = channel
         self._playwright = None
         self._browser = None
-    
+
     def __enter__(self):
         from patchright.sync_api import sync_playwright
         self._pw_context = sync_playwright()
@@ -385,7 +385,7 @@ class BrowserClient:
             self._browser.close()
         if self._pw_context:
             self._pw_context.__exit__(*args)
-    
+
     def get_rendered_html(self, url: str, wait_selector: str = "div#search", timeout: int = 10000) -> str:
         page = self._browser.new_page()
         try:
