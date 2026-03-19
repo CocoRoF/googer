@@ -1,22 +1,10 @@
 # Googer
 
-**A powerful, type-safe Google Search library for Python.**
+**A multi-engine search library for Python supporting 7 search engines.**
 
-Googer provides an elegant Python interface for querying Google Search and receiving structured, typed results. Built with robustness in mind — featuring automatic retries, rate-limit detection, TLS fingerprint impersonation, and a fluent query builder.
+DuckDuckGo · Brave · Google · Ecosia · Yahoo · AOL · Naver — unified search through a single API.
 
-## Features
-
-- **Web Search** — Full-text Google web search with pagination
-- **Image Search** — Google Images with size, color, type, and license filters
-- **News Search** — Google News with time filtering
-- **Video Search** — Google Videos with duration filtering
-- **Advanced Query Builder** — Fluent API for complex Google operators (`site:`, `filetype:`, `intitle:`, exact phrases, exclusions, date ranges, etc.)
-- **Anti-Detection** — Rotating User-Agents (GSA/Chrome), TLS fingerprint impersonation via `primp`
-- **Automatic Retries** — Exponential back-off with configurable retry count
-- **Rate-Limit Detection** — Detects CAPTCHA/rate-limit pages and raises clear exceptions
-- **Proxy Support** — HTTP, HTTPS, SOCKS5 (with Tor Browser shorthand `"tb"`)
-- **CLI Tool** — `googer` command-line interface for all search types
-- **Type-Safe** — Full type annotations, `py.typed` marker, mypy-strict compatible
+[한국어 문서 (Korean)](README_KO.md)
 
 ## Installation
 
@@ -26,23 +14,88 @@ pip install googer
 
 ## Quick Start
 
-### Python API
-
 ```python
 from googer import Googer
 
-# Simple search
+# Search (default: auto mode — automatic engine selection with fallback)
 results = Googer().search("python programming")
 for r in results:
     print(r.title, r.href)
 ```
 
-### Advanced Query Builder
+## Engine Selection
+
+```python
+from googer import Googer
+
+# Use a specific engine
+g = Googer(engine="brave")
+results = g.search("rust language")
+
+# Multi-engine — query multiple engines concurrently and merge results
+g = Googer(engine="multi")
+results = g.search("machine learning")
+
+# Override engine per method call
+g = Googer(engine="duckduckgo")
+results = g.search("AI news", engine="naver")  # uses Naver for this call only
+```
+
+### Supported Engines
+
+| Engine | Text | Images | News | Videos |
+|--------|:----:|:------:|:----:|:------:|
+| `duckduckgo` | ✅ | ✅ | ✅ | ✅ |
+| `brave` | ✅ | | ✅ | ✅ |
+| `google` | ✅ | ✅ | ✅ | ✅ |
+| `ecosia` | ✅ | | | |
+| `yahoo` | ✅ | | | |
+| `aol` | ✅ | | | |
+| `naver` | ✅ | | | |
+
+### Engine Modes
+
+| Mode | Description |
+|------|-------------|
+| `auto` | Default. Tries engines in fallback order, uses the first that succeeds |
+| `multi` | Queries multiple engines concurrently, merges and deduplicates results |
+| `duckduckgo`, `brave`, ... | Uses only the specified engine |
+
+## Search Types
+
+```python
+from googer import Googer
+
+g = Googer()
+
+# Text search
+results = g.search("python", region="ko-kr", max_results=20)
+
+# Image search
+images = g.images("cute cats", size="large", color="color")
+for img in images:
+    print(img.title, img.image)
+
+# News search (last 24 hours)
+news = g.news("AI", timelimit="d")
+for n in news:
+    print(n.title, n.source, n.date)
+
+# Video search (short videos only)
+videos = g.videos("python tutorial", duration="short")
+
+# Autocomplete suggestions
+suggestions = g.suggest("python")
+
+# Instant answer
+answer = g.answers("python release date")
+```
+
+## Advanced Queries
 
 ```python
 from googer import Googer, Query
 
-# Build a complex query with operators
 q = (
     Query("machine learning")
     .exact("neural network")
@@ -54,33 +107,7 @@ q = (
 results = Googer().search(q, max_results=20)
 ```
 
-### Search Categories
-
-```python
-from googer import Googer
-
-g = Googer()
-
-# Web search
-web = g.search("python", region="ko-kr", max_results=10)
-
-# Image search with filters
-images = g.images("cute cats", size="large", color="color")
-for img in images:
-    print(img.title, img.image)
-
-# News search — last 24 hours
-news = g.news("artificial intelligence", timelimit="d")
-for n in news:
-    print(n.title, n.source, n.date)
-
-# Video search — short videos only
-videos = g.videos("python tutorial", duration="short")
-for v in videos:
-    print(v.title, v.url, v.duration)
-```
-
-### Context Manager & Proxy
+## Proxy & Context Manager
 
 ```python
 from googer import Googer
@@ -94,22 +121,46 @@ with Googer(proxy="tb") as g:
     results = g.search("onion sites")
 ```
 
+## All Options
+
+```python
+g = Googer(
+    engine="auto",          # auto | multi | duckduckgo | brave | google | ecosia | yahoo | aol | naver
+    proxy=None,             # Proxy URL (http/https/socks5)
+    timeout=10,             # Request timeout in seconds
+    max_retries=3,          # Number of retries
+    cache_ttl=300,          # Cache TTL in seconds (0 to disable)
+    backend="http",         # http | browser
+    headless=True,          # Headless mode when using browser backend
+    verify=True,            # SSL certificate verification
+)
+```
+
 ## CLI
 
 ```bash
-# Web search
+# Text search
 googer search -q "python programming" -m 5
 
-# News — past week
+# Specify engine
+googer search -q "news" --engine naver
+
+# Multi-engine search
+googer search -q "AI" --engine multi
+
+# News (past week)
 googer news -q "AI" -t w
 
-# Images — large, creative commons
-googer images -q "landscape" --size large --license creative_commons
+# Images
+googer images -q "landscape" --size large
 
-# Videos — short duration
+# Videos
 googer videos -q "cooking" --duration short
 
-# Save to file
+# Suggestions
+googer suggest -q "python"
+
+# Save results
 googer search -q "python" -o results.json
 googer search -q "python" -o results.csv
 
@@ -125,52 +176,30 @@ googer version
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--query` | `-q` | Search query (required) |
+| `--engine` | | Engine selection (default: `auto`) |
 | `--region` | `-r` | Region code (default: `us-en`) |
-| `--safesearch` | `-s` | `on`, `moderate`, `off` (default: `moderate`) |
-| `--timelimit` | `-t` | `h` (hour), `d` (day), `w` (week), `m` (month), `y` (year) |
-| `--max-results` | `-m` | Maximum results (default: `10`) |
+| `--safesearch` | `-s` | `on` / `moderate` / `off` |
+| `--timelimit` | `-t` | `h` (hour) `d` (day) `w` (week) `m` (month) `y` (year) |
+| `--max-results` | `-m` | Maximum number of results (default: `10`) |
+| `--backend` | | `http` / `browser` |
 | `--proxy` | | Proxy URL |
 | `--timeout` | | Timeout in seconds (default: `10`) |
 | `--output` | `-o` | Save to `.json` or `.csv` file |
 | `--no-color` | | Disable colored output |
 
-## Configuration
+## Environment Variables
 
-| Environment Variable | Description |
-|-------------------|----|
+| Variable | Description |
+|----------|-------------|
 | `GOOGER_PROXY` | Default proxy URL |
-
-## Architecture
-
-```
-googer/
-├── __init__.py          # Public API: Googer, Query
-├── googer.py            # Main Googer class (orchestrator)
-├── config.py            # Constants, URLs, XPath selectors
-├── exceptions.py        # Exception hierarchy
-├── http_client.py       # HTTP client with retries & anti-detection
-├── parser.py            # XPath-based HTML parser
-├── query_builder.py     # Fluent query builder (Query)
-├── results.py           # Typed result dataclasses
-├── user_agents.py       # User-Agent rotation
-├── ranker.py            # Relevance ranking
-├── utils.py             # Text/URL normalization helpers
-├── cli.py               # Click-based CLI
-└── engines/
-    ├── base.py          # Abstract base engine
-    ├── text.py          # Web/text search
-    ├── images.py        # Image search
-    ├── news.py          # News search
-    └── videos.py        # Video search
-```
 
 ## Requirements
 
 - Python 3.10+
-- [primp](https://github.com/deedy5/primp) — HTTP client with TLS impersonation
-- [lxml](https://lxml.de/) — Fast HTML/XML parsing
+- [primp](https://github.com/deedy5/primp) — HTTP client with TLS fingerprint impersonation
+- [lxml](https://lxml.de/) — HTML parsing
 - [click](https://click.palletsprojects.com/) — CLI framework
 
 ## License
 
-Apache License 2.0. See [LICENSE.md](LICENSE.md) for details.
+Apache License 2.0 — [LICENSE.md](LICENSE.md)

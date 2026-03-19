@@ -1,16 +1,16 @@
-"""googer 사용 예제 스크립트.
+"""Googer example script.
 
-실행 전 설치:
+Install before running:
     pip install googer
 
-Google 백엔드를 사용하려면:
+To use the Google browser backend:
     pip install googer[browser]
     patchright install chromium
 
-사용법:
+Usage:
     python example.py
     python example.py --query "machine learning"
-    python example.py --query "서울 맛집" --max-results 20
+    python example.py --query "python tutorial" --max-results 20
     python example.py --engine google --backend browser
 """
 
@@ -21,7 +21,7 @@ from googer import Googer
 
 
 def text_search(query: str, max_results: int = 10, engine: str = "auto", backend: str = "http") -> None:
-    """텍스트 검색 (기본)."""
+    """Text search (default)."""
     print(f"\n{'=' * 60}")
     print(f"  Text Search [{engine}]: {query}")
     print(f"{'=' * 60}")
@@ -37,7 +37,7 @@ def text_search(query: str, max_results: int = 10, engine: str = "auto", backend
 
 
 def news_search(query: str, max_results: int = 5, engine: str = "auto", backend: str = "http") -> None:
-    """뉴스 검색."""
+    """News search."""
     print(f"\n{'=' * 60}")
     print(f"  News Search [{engine}]: {query}")
     print(f"{'=' * 60}")
@@ -55,7 +55,7 @@ def news_search(query: str, max_results: int = 5, engine: str = "auto", backend:
 
 
 def video_search(query: str, max_results: int = 5, engine: str = "auto", backend: str = "http") -> None:
-    """비디오 검색."""
+    """Video search."""
     print(f"\n{'=' * 60}")
     print(f"  Video Search [{engine}]: {query}")
     print(f"{'=' * 60}")
@@ -71,7 +71,7 @@ def video_search(query: str, max_results: int = 5, engine: str = "auto", backend
 
 
 def query_builder_search(engine: str = "auto", backend: str = "http") -> None:
-    """Query 빌더 사용 예제."""
+    """Query builder example."""
     from googer import Query
 
     print(f"\n{'=' * 60}")
@@ -91,20 +91,20 @@ def query_builder_search(engine: str = "auto", backend: str = "http") -> None:
 
 def main() -> None:
     """Entry point."""
-    parser = argparse.ArgumentParser(description="googer 사용 예제")
-    parser.add_argument("--query", "-q", default="python programming", help="검색어")
-    parser.add_argument("--max-results", "-n", type=int, default=10, help="최대 결과 수")
+    parser = argparse.ArgumentParser(description="googer example")
+    parser.add_argument("--query", "-q", default="python programming", help="Search query")
+    parser.add_argument("--max-results", "-n", type=int, default=10, help="Max results")
     parser.add_argument(
         "--engine", "-e", choices=["auto", "duckduckgo", "google"], default="auto",
-        help="검색 엔진 (auto=자동, duckduckgo, google)",
+        help="Search engine (auto, duckduckgo, google)",
     )
     parser.add_argument(
         "--backend", "-b", choices=["browser", "http"], default="http",
-        help="백엔드 (browser=patchright, http=primp)",
+        help="Backend (browser=patchright, http=primp)",
     )
     parser.add_argument(
         "--type", "-t", choices=["text", "news", "videos", "query", "all"], default="text",
-        help="검색 유형",
+        help="Search type",
     )
     args = parser.parse_args()
 
