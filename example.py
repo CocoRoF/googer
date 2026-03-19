@@ -1,14 +1,17 @@
-"""googer 사용 예제 스크립트.
+"""Googer example script.
 
-실행 전 설치:
+Install before running:
+    pip install googer
+
+To use the Google browser backend:
     pip install googer[browser]
     patchright install chromium
 
-사용법:
+Usage:
     python example.py
     python example.py --query "machine learning"
-    python example.py --query "서울 맛집" --max-results 20
-    python example.py --backend http
+    python example.py --query "python tutorial" --max-results 20
+    python example.py --engine google --backend browser
 """
 
 import argparse
@@ -17,13 +20,13 @@ import sys
 from googer import Googer
 
 
-def text_search(query: str, max_results: int = 10, backend: str = "browser") -> None:
-    """텍스트 검색 (기본)."""
+def text_search(query: str, max_results: int = 10, engine: str = "auto", backend: str = "http") -> None:
+    """Text search (default)."""
     print(f"\n{'=' * 60}")
-    print(f"  Text Search: {query}")
+    print(f"  Text Search [{engine}]: {query}")
     print(f"{'=' * 60}")
 
-    with Googer(backend=backend) as g:  # type: ignore[arg-type]
+    with Googer(engine=engine, backend=backend) as g:  # type: ignore[arg-type]
         results = g.search(query, max_results=max_results)
 
     for i, r in enumerate(results, 1):
@@ -33,13 +36,13 @@ def text_search(query: str, max_results: int = 10, backend: str = "browser") -> 
             print(f"      {r.body[:150]}")
 
 
-def news_search(query: str, max_results: int = 5, backend: str = "browser") -> None:
-    """뉴스 검색."""
+def news_search(query: str, max_results: int = 5, engine: str = "auto", backend: str = "http") -> None:
+    """News search."""
     print(f"\n{'=' * 60}")
-    print(f"  News Search: {query}")
+    print(f"  News Search [{engine}]: {query}")
     print(f"{'=' * 60}")
 
-    with Googer(backend=backend) as g:  # type: ignore[arg-type]
+    with Googer(engine=engine, backend=backend) as g:  # type: ignore[arg-type]
         results = g.news(query, max_results=max_results)
 
     for i, r in enumerate(results, 1):
@@ -51,13 +54,13 @@ def news_search(query: str, max_results: int = 5, backend: str = "browser") -> N
             print(f"      date:   {r.date}")
 
 
-def video_search(query: str, max_results: int = 5, backend: str = "browser") -> None:
-    """비디오 검색."""
+def video_search(query: str, max_results: int = 5, engine: str = "auto", backend: str = "http") -> None:
+    """Video search."""
     print(f"\n{'=' * 60}")
-    print(f"  Video Search: {query}")
+    print(f"  Video Search [{engine}]: {query}")
     print(f"{'=' * 60}")
 
-    with Googer(backend=backend) as g:  # type: ignore[arg-type]
+    with Googer(engine=engine, backend=backend) as g:  # type: ignore[arg-type]
         results = g.videos(query, max_results=max_results)
 
     for i, r in enumerate(results, 1):
@@ -67,8 +70,8 @@ def video_search(query: str, max_results: int = 5, backend: str = "browser") -> 
             print(f"      duration: {r.duration}")
 
 
-def query_builder_search(backend: str = "browser") -> None:
-    """Query 빌더 사용 예제."""
+def query_builder_search(engine: str = "auto", backend: str = "http") -> None:
+    """Query builder example."""
     from googer import Query
 
     print(f"\n{'=' * 60}")
@@ -78,7 +81,7 @@ def query_builder_search(backend: str = "browser") -> None:
     q = Query("python tutorial").site("github.com").filetype("md")
     print(f"  Built query: {q}\n")
 
-    with Googer(backend=backend) as g:  # type: ignore[arg-type]
+    with Googer(engine=engine, backend=backend) as g:  # type: ignore[arg-type]
         results = g.search(q, max_results=5)
 
     for i, r in enumerate(results, 1):
@@ -88,32 +91,36 @@ def query_builder_search(backend: str = "browser") -> None:
 
 def main() -> None:
     """Entry point."""
-    parser = argparse.ArgumentParser(description="googer 사용 예제")
-    parser.add_argument("--query", "-q", default="python programming", help="검색어")
-    parser.add_argument("--max-results", "-n", type=int, default=10, help="최대 결과 수")
+    parser = argparse.ArgumentParser(description="googer example")
+    parser.add_argument("--query", "-q", default="python programming", help="Search query")
+    parser.add_argument("--max-results", "-n", type=int, default=10, help="Max results")
     parser.add_argument(
-        "--backend", "-b", choices=["browser", "http"], default="browser",
-        help="백엔드 (browser=patchright, http=primp)",
+        "--engine", "-e", choices=["auto", "duckduckgo", "google"], default="auto",
+        help="Search engine (auto, duckduckgo, google)",
+    )
+    parser.add_argument(
+        "--backend", "-b", choices=["browser", "http"], default="http",
+        help="Backend (browser=patchright, http=primp)",
     )
     parser.add_argument(
         "--type", "-t", choices=["text", "news", "videos", "query", "all"], default="text",
-        help="검색 유형",
+        help="Search type",
     )
     args = parser.parse_args()
 
     search_type = args.type
 
     if search_type in ("text", "all"):
-        text_search(args.query, args.max_results, args.backend)
+        text_search(args.query, args.max_results, args.engine, args.backend)
 
     if search_type in ("news", "all"):
-        news_search(args.query, max_results=5, backend=args.backend)
+        news_search(args.query, max_results=5, engine=args.engine, backend=args.backend)
 
     if search_type in ("videos", "all"):
-        video_search(args.query, max_results=5, backend=args.backend)
+        video_search(args.query, max_results=5, engine=args.engine, backend=args.backend)
 
     if search_type in ("query", "all"):
-        query_builder_search(args.backend)
+        query_builder_search(args.engine, args.backend)
 
     print("\nDone.")
 

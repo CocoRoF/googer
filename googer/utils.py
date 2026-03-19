@@ -8,7 +8,7 @@ import re
 import unicodedata
 from datetime import datetime, timezone
 from html import unescape
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urlparse
 
 _RE_STRIP_TAGS = re.compile(r"<.*?>")
 _RE_MULTI_SPACES = re.compile(r"\s+")
@@ -121,6 +121,57 @@ def expand_proxy_alias(proxy: str | None) -> str | None:
     if proxy == "tb":
         return "socks5h://127.0.0.1:9150"
     return proxy
+
+
+def extract_ddg_url(raw_url: str) -> str:
+    """Extract the actual destination URL from a DuckDuckGo redirect URL.
+
+    DuckDuckGo wraps outbound links in ``//duckduckgo.com/l/?uddg=<target>&...``.
+    This function extracts ``<target>``.
+
+    Args:
+        raw_url: Possibly-wrapped DuckDuckGo redirect URL.
+
+    Returns:
+        The unwrapped destination URL, or the original if not wrapped.
+
+    """
+    if not raw_url:
+        return ""
+    if "uddg=" in raw_url:
+        url = raw_url if raw_url.startswith("http") else f"https:{raw_url}"
+        parsed = urlparse(url)
+        uddg = parse_qs(parsed.query).get("uddg")
+        if uddg:
+            return unquote(uddg[0])
+    return normalize_url(raw_url)
+
+
+def extract_yahoo_redirect_url(raw_url: str) -> str:
+    """Extract the actual destination URL from a Yahoo/AOL redirect URL.
+
+    Yahoo and AOL wrap outbound links in
+    ``r.search.yahoo.com/_ylt=.../RU=<target>/RK=...``.
+    This function extracts ``<target>`` and URL-decodes it.
+
+    Handles both percent-encoded and already-decoded forms since
+    :class:`TextResult` may normalise the href before post-processing.
+
+    Args:
+        raw_url: Possibly-wrapped Yahoo/AOL redirect URL.
+
+    Returns:
+        The unwrapped destination URL, or the original if not wrapped.
+
+    """
+    if not raw_url:
+        return ""
+    if "/RU=" in raw_url:
+        # Match everything between /RU= and /RK= (greedy but bounded)
+        match = re.search(r"/RU=(.*?)/RK=", raw_url)
+        if match:
+            return unquote(match.group(1))
+    return normalize_url(raw_url)
 
 
 def build_region_params(region: str) -> dict[str, str]:

@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "googer"
-description = "A powerful, type-safe Google Search library for Python."
+description = "A powerful, multi-engine search library for Python with DuckDuckGo, Brave Search, Google, Ecosia, Yahoo, AOL, and Naver — featuring concurrent multi-engine mode, suggestions, instant answers, and result caching."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
-keywords = ["python", "google", "search", "web-scraping", "search-engine"]
+keywords = ["python", "search", "duckduckgo", "brave", "google", "ecosia", "yahoo", "aol", "naver", "web-search", "search-engine", "multi-engine"]
 authors = [
     {name = "googer contributors"}
 ]
@@ -27,7 +27,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-version = "0.4.1"
+version = "0.7.0"
 dependencies = [
     "click>=8.1.8",
     "primp>=1.1.0",

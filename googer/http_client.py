@@ -38,15 +38,23 @@ class Response:
         status_code: HTTP status code.
         content: Raw bytes of the response body.
         text: Decoded text of the response body.
+        headers: Response headers as a dict.
 
     """
 
-    __slots__ = ("content", "status_code", "text")
+    __slots__ = ("content", "headers", "status_code", "text")
 
-    def __init__(self, status_code: int, content: bytes, text: str) -> None:
+    def __init__(
+        self,
+        status_code: int,
+        content: bytes,
+        text: str,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self.status_code = status_code
         self.content = content
         self.text = text
+        self.headers = headers or {}
 
     @property
     def ok(self) -> bool:
@@ -138,10 +146,15 @@ class HttpClient:
         for attempt in range(1, self._max_retries + 1):
             try:
                 resp = self.client.request(method=method, url=url, **kwargs)
+                try:
+                    resp_headers = dict(resp.headers) if hasattr(resp, "headers") else {}
+                except Exception:  # noqa: BLE001
+                    resp_headers = {}
                 wrapped = Response(
                     status_code=resp.status_code,
                     content=resp.content,
                     text=resp.text,
+                    headers=resp_headers,
                 )
 
                 # Forbidden / bot-detection
