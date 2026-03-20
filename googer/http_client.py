@@ -165,7 +165,7 @@ class HttpClient:
                         self._backoff(attempt)
                         continue
                     raise RateLimitException(
-                        "Google returned 403 Forbidden. Try again later or use a proxy."
+                        f"403 Forbidden from {url}. Try again later or use a proxy."
                     )
 
                 # Rate-limit / CAPTCHA detection
@@ -176,7 +176,7 @@ class HttpClient:
                         self._backoff(attempt)
                         continue
                     raise RateLimitException(
-                        "Google rate limit detected. Try again later or use a proxy."
+                        f"Rate limit detected from {url}. Try again later or use a proxy."
                     )
 
                 return wrapped
@@ -214,9 +214,12 @@ class HttpClient:
 
     @staticmethod
     def _is_rate_limited(response: Response) -> bool:
-        """Check whether a response looks like a Google rate-limit page."""
+        """Check whether a response looks like a rate-limit / CAPTCHA page."""
         if response.status_code == 429:  # noqa: PLR2004
             return True
+        # Large pages (>50KB) are real content, not rate-limit pages
+        if len(response.text) > 50000:  # noqa: PLR2004
+            return False
         text_lower = response.text.lower()
         return any(indicator in text_lower for indicator in RATE_LIMIT_INDICATORS)
 

@@ -412,9 +412,11 @@ class Googer:
 
         # Sequential fallback search
         last_exception: Exception | None = None
+        tried_providers: list[str] = []
 
         for provider in providers:
             try:
+                tried_providers.append(provider)
                 results = self._search_single_provider(
                     provider,
                     search_type,
@@ -464,10 +466,30 @@ class Googer:
                 )
                 last_exception = exc
                 continue
+            except GoogerException as exc:
+                logger.warning(
+                    "Provider '%s' error for '%s': %s. Trying next provider...",
+                    provider,
+                    search_type,
+                    exc,
+                )
+                last_exception = exc
+                continue
 
         if last_exception:
+            logger.warning(
+                "All providers failed for query %r (tried: %s). Last error: %s",
+                query_str,
+                ", ".join(tried_providers),
+                last_exception,
+            )
             raise last_exception
 
+        logger.warning(
+            "No results from any provider for query %r (tried: %s)",
+            query_str,
+            ", ".join(tried_providers),
+        )
         msg = f"No results found for query: {query_str!r}"
         raise NoResultsException(msg)
 

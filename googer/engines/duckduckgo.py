@@ -61,12 +61,14 @@ def _extract_ddg_url(raw_url: str) -> str:
 
 def _get_vqd(http_client: Any, query: str) -> str:
     """Obtain a VQD token required for DuckDuckGo API searches."""
+    # Use x-vqd-accept header to request VQD token in response
+    http_client.update_headers({"x-vqd-accept": "1"})
     resp = http_client.get(DDG_VQD_URL, params={"q": query})
     if not resp or not resp.ok:
         msg = "Failed to reach DuckDuckGo for search token"
         raise GoogerException(msg)
 
-    # Try response headers first
+    # Try response headers first (preferred method)
     vqd = resp.headers.get("x-vqd-4", "")
     if vqd:
         return vqd
@@ -253,9 +255,14 @@ class DuckDuckGoImagesEngine(BaseEngine[ImageResult]):
         vqd = _get_vqd(self._http, query)
         kp_val = DDG_SAFESEARCH_MAP.get(safesearch.lower(), "-1")
 
+        # Set required headers for DDG API authentication
+        self._http.update_headers({
+            "Referer": "https://duckduckgo.com/",
+            "x-vqd-4": vqd,
+        })
+
         params: dict[str, str] = {
             "q": query,
-            "vqd": vqd,
             "o": "json",
             "l": _ddg_region(region),
             "p": kp_val,
@@ -351,9 +358,14 @@ class DuckDuckGoNewsEngine(BaseEngine[NewsResult]):
         """Fetch news results from DDG JSON API with pagination."""
         vqd = _get_vqd(self._http, query)
 
+        # Set required headers for DDG API authentication
+        self._http.update_headers({
+            "Referer": "https://duckduckgo.com/",
+            "x-vqd-4": vqd,
+        })
+
         params: dict[str, str] = {
             "q": query,
-            "vqd": vqd,
             "o": "json",
             "l": _ddg_region(region),
             "s": "0",
@@ -443,9 +455,14 @@ class DuckDuckGoVideosEngine(BaseEngine[VideoResult]):
         """Fetch video results from DDG JSON API with pagination."""
         vqd = _get_vqd(self._http, query)
 
+        # Set required headers for DDG API authentication
+        self._http.update_headers({
+            "Referer": "https://duckduckgo.com/",
+            "x-vqd-4": vqd,
+        })
+
         params: dict[str, str] = {
             "q": query,
-            "vqd": vqd,
             "o": "json",
             "l": _ddg_region(region),
             "s": "0",

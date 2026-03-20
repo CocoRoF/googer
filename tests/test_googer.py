@@ -306,7 +306,7 @@ class TestConfig:
 
     def test_fallback_order(self) -> None:
         assert ENGINE_FALLBACK_ORDER == (
-            "duckduckgo", "brave", "ecosia", "yahoo", "aol", "google", "naver",
+            "duckduckgo", "brave", "ecosia", "yahoo", "aol", "naver",
         )
 
 
