@@ -4,7 +4,7 @@ Exposes an ``ENGINES`` dict mapping provider name → search-type → engine cla
 """
 
 from .aol import AolTextEngine
-from .brave import BraveNewsEngine, BraveTextEngine, BraveVideosEngine
+from .brave import BraveImagesEngine, BraveNewsEngine, BraveTextEngine, BraveVideosEngine
 from .duckduckgo import (
     DuckDuckGoImagesEngine,
     DuckDuckGoNewsEngine,
@@ -34,6 +34,7 @@ ENGINES: dict[str, dict[str, type]] = {
     },
     "brave": {
         "text": BraveTextEngine,
+        "images": BraveImagesEngine,
         "news": BraveNewsEngine,
         "videos": BraveVideosEngine,
     },
@@ -54,6 +55,7 @@ ENGINES: dict[str, dict[str, type]] = {
 __all__ = [
     "ENGINES",
     "AolTextEngine",
+    "BraveImagesEngine",
     "BraveNewsEngine",
     "BraveTextEngine",
     "BraveVideosEngine",

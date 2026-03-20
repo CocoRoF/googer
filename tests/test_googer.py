@@ -514,14 +514,14 @@ class TestBraveEngines:
     def test_brave_types_exist(self) -> None:
         from googer.engines import ENGINES
 
-        for search_type in ("text", "news", "videos"):
+        for search_type in ("text", "images", "news", "videos"):
             assert search_type in ENGINES["brave"], f"Brave missing {search_type} engine"
 
-    def test_brave_no_images(self) -> None:
-        """Brave images require JS rendering and are not supported."""
+    def test_brave_images_registered(self) -> None:
+        """Brave images engine is registered."""
         from googer.engines import ENGINES
 
-        assert "images" not in ENGINES["brave"]
+        assert "images" in ENGINES["brave"]
 
     def test_brave_text_build_params(self) -> None:
         from googer.engines.brave import BraveTextEngine
@@ -829,10 +829,12 @@ class TestGoogerMultiEngine:
         engine = g._get_engine("brave", "videos")
         assert isinstance(engine, BraveVideosEngine)
 
-    def test_get_engine_brave_images_raises(self) -> None:
+    def test_get_engine_brave_images(self) -> None:
+        from googer.engines.brave import BraveImagesEngine
+
         g = Googer()
-        with pytest.raises(GoogerException, match="no 'images' engine"):
-            g._get_engine("brave", "images")
+        engine = g._get_engine("brave", "images")
+        assert isinstance(engine, BraveImagesEngine)
 
 
 class TestGoogerCache:

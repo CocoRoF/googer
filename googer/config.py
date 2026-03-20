@@ -64,6 +64,7 @@ DDG_ANSWER_URL: Final[str] = "https://api.duckduckgo.com/"
 BRAVE_TEXT_URL: Final[str] = "https://search.brave.com/search"
 BRAVE_NEWS_URL: Final[str] = "https://search.brave.com/news"
 BRAVE_VIDEOS_URL: Final[str] = "https://search.brave.com/videos"
+BRAVE_IMAGES_URL: Final[str] = "https://search.brave.com/images"
 
 # ---------------------------------------------------------------------------
 # Ecosia URLs

@@ -1,16 +1,20 @@
 """Brave Search engines for Googer.
 
-Provides text, news, and video search via Brave Search.
+Provides text, image, news, and video search via Brave Search.
 Uses lightweight HTML scraping with no JavaScript rendering or API keys.
-Brave's image search requires JavaScript and is not supported.
 """
 
+import base64
 import logging
+import re
 import time
 from random import uniform
 from typing import Any, ClassVar
 
+from lxml import html as lxml_html
+
 from ..config import (
+    BRAVE_IMAGES_URL,
     BRAVE_NEWS_ELEMENTS_XPATH,
     BRAVE_NEWS_ITEMS_XPATH,
     BRAVE_NEWS_URL,
@@ -27,7 +31,7 @@ from ..config import (
     DEFAULT_REGION,
     DEFAULT_SAFESEARCH,
 )
-from ..results import NewsResult, TextResult, VideoResult
+from ..results import ImageResult, NewsResult, TextResult, VideoResult
 from .base import BaseEngine
 
 logger = logging.getLogger(__name__)
@@ -51,6 +55,153 @@ def _brave_lang(region: str) -> str:
         return "en"
     parts = region.lower().split("-", 1)
     return parts[1] if len(parts) > 1 else parts[0]
+
+
+def _decode_brave_image_url(proxy_url: str) -> str:
+    """Decode the original image URL from Brave's proxy URL.
+
+    Brave proxies images through ``imgs.search.brave.com`` and encodes
+    the original URL as base64 segments after ``/g:ce/``.
+    """
+    if "/g:ce/" not in proxy_url:
+        return proxy_url
+    b64_part = proxy_url.split("/g:ce/")[1]
+    b64_clean = "".join(b64_part.split("/"))
+    padding = 4 - len(b64_clean) % 4
+    if padding != 4:
+        b64_clean += "=" * padding
+    try:
+        return base64.b64decode(b64_clean).decode("utf-8")
+    except Exception:  # noqa: BLE001
+        return proxy_url
+
+
+# ---------------------------------------------------------------------------
+# Image search engine (HTML scraping)
+# ---------------------------------------------------------------------------
+
+
+class BraveImagesEngine(BaseEngine[ImageResult]):
+    """Brave Search image engine.
+
+    Scrapes Brave Image search's server-rendered HTML page.
+    Extracts thumbnail, original image URL (base64 decoded), title, and source.
+    """
+
+    name: ClassVar[str] = "brave-images"
+    search_url: ClassVar[str] = BRAVE_IMAGES_URL
+    result_type = ImageResult  # type: ignore[assignment]
+
+    def build_params(
+        self,
+        query: str,
+        region: str,
+        safesearch: str,
+        timelimit: str | None,
+        page: int = 1,
+        **kwargs: Any,  # noqa: ARG002
+    ) -> dict[str, Any]:
+        """Build GET parameters for Brave image search."""
+        params: dict[str, str] = {
+            "q": query,
+            "source": "images",
+        }
+        country = _brave_region(region)
+        if country:
+            params["country"] = country
+        safe = BRAVE_SAFESEARCH_MAP.get(safesearch.lower(), "moderate")
+        params["safesearch"] = safe
+        if timelimit and timelimit in BRAVE_TIMELIMIT_MAP:
+            params["tf"] = BRAVE_TIMELIMIT_MAP[timelimit]
+        if page > 1:
+            params["offset"] = str(page - 1)
+        return params
+
+    def search_pages(
+        self,
+        query: str,
+        region: str = DEFAULT_REGION,
+        safesearch: str = DEFAULT_SAFESEARCH,
+        timelimit: str | None = None,
+        max_results: int = DEFAULT_MAX_RESULTS,
+        **kwargs: Any,
+    ) -> list[ImageResult]:
+        """Fetch image results by scraping Brave's image search HTML."""
+        params = self.build_params(
+            query=query,
+            region=region,
+            safesearch=safesearch,
+            timelimit=timelimit,
+            page=1,
+        )
+        try:
+            resp = self._http.get(self.search_url, params=params)
+        except Exception:
+            logger.exception("Brave images request failed")
+            return []
+
+        if not resp or not resp.ok:
+            return []
+
+        try:
+            tree = lxml_html.fromstring(resp.text)
+        except Exception:  # noqa: BLE001
+            logger.warning("Brave images: failed to parse HTML")
+            return []
+
+        buttons = tree.xpath('//button[contains(@class, "image-result")]')
+        if not buttons:
+            logger.debug("Brave images: no image-result buttons found")
+            return []
+
+        all_results: list[ImageResult] = []
+        for btn in buttons:
+            imgs = btn.xpath('.//div[contains(@class, "image-wrapper")]//img')
+            if not imgs:
+                continue
+
+            thumbnail = imgs[0].get("src", "")
+            alt_title = imgs[0].get("alt", "")
+
+            # Decode original image URL from Brave proxy
+            image_url = _decode_brave_image_url(thumbnail)
+
+            # Title from metadata span (more complete) or img alt
+            title_spans = btn.xpath('.//span[contains(@class, "image-metadata-title")]')
+            title = title_spans[0].text_content().strip() if title_spans else alt_title
+
+            # Source domain
+            source_spans = btn.xpath('.//span[contains(@class, "image-metadata-source")]')
+            source = source_spans[0].text_content().strip() if source_spans else ""
+
+            # Dimensions from button style
+            style = btn.get("style", "")
+            w_match = re.search(r"--width:\s*(\d+)", style)
+            h_match = re.search(r"--height:\s*(\d+)", style)
+            width = w_match.group(1) if w_match else ""
+            height = h_match.group(1) if h_match else ""
+
+            # Build source page URL from domain
+            url = f"https://{source}" if source and not source.startswith("http") else source
+
+            all_results.append(ImageResult(
+                title=title,
+                image=image_url,
+                thumbnail=thumbnail,
+                url=url,
+                height=height,
+                width=width,
+                source=source,
+            ))
+
+            if len(all_results) >= max_results:
+                break
+
+        return all_results[:max_results]
+
+    def post_process(self, results: list[ImageResult]) -> list[ImageResult]:
+        """Filter out results without images."""
+        return [r for r in results if r.image and r.title]
 
 
 # ---------------------------------------------------------------------------
