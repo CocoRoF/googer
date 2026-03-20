@@ -1,5 +1,6 @@
 """Google news search engine."""
 
+import logging
 from typing import Any, ClassVar
 
 from ..config import (
@@ -12,6 +13,8 @@ from ..config import (
 from ..results import NewsResult
 from ..utils import extract_clean_url
 from .base import BaseEngine
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleNewsEngine(BaseEngine[NewsResult]):
@@ -61,4 +64,9 @@ class GoogleNewsEngine(BaseEngine[NewsResult]):
             r.url = extract_clean_url(r.url)
             if r.title:
                 cleaned.append(r)
+        if not cleaned:
+            logger.warning(
+                "Google News returned 0 parseable results. Google now requires "
+                "JavaScript rendering \u2014 use backend='browser' or a different engine."
+            )
         return cleaned

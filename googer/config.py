@@ -25,8 +25,13 @@ DEFAULT_IMPERSONATE_OS: Final[str] = "random"
 # ---------------------------------------------------------------------------
 DEFAULT_ENGINE: Final[str] = "auto"
 ENGINE_FALLBACK_ORDER: Final[tuple[str, ...]] = (
-    "duckduckgo", "brave", "ecosia", "yahoo", "aol", "google", "naver",
+    "duckduckgo", "brave", "ecosia", "yahoo", "aol", "naver",
 )
+
+# Google requires a full browser (JS rendering) — not included in
+# the default HTTP fallback chain.  Use ``engine="google"`` with
+# ``backend="browser"`` explicitly, or the ``multi`` engine mode
+# which already handles Google failures gracefully.
 
 # ---------------------------------------------------------------------------
 # Cache defaults
@@ -194,9 +199,8 @@ VIDEO_ELEMENTS_XPATH: Final[dict[str, str]] = {
 # ---------------------------------------------------------------------------
 RATE_LIMIT_INDICATORS: Final[tuple[str, ...]] = (
     "detected unusual traffic",
-    "captcha",
     "/sorry/",
-    "recaptcha",
+    "our systems have detected unusual traffic",
 )
 
 # ---------------------------------------------------------------------------

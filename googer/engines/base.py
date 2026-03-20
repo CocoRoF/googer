@@ -146,13 +146,26 @@ class BaseEngine(ABC, Generic[T]):
 
         resp = self._make_request(params)
         if not resp or not resp.ok:
-            logger.warning("Engine %s returned status %s", self.name, resp.status_code if resp else "None")
+            logger.warning(
+                "Engine %s: HTTP %s for url=%s (body=%d bytes)",
+                self.name,
+                resp.status_code if resp else "None",
+                self.search_url,
+                len(resp.text) if resp else 0,
+            )
             return []
 
         if self._parser is None:
+            logger.warning("Engine %s: no parser configured", self.name)
             return []
 
         results = self._parser.parse(resp.text, self.result_type)  # type: ignore[arg-type]
+        logger.debug(
+            "Engine %s: parsed %d raw results from %d bytes",
+            self.name,
+            len(results),
+            len(resp.text),
+        )
         return self.post_process(results)
 
     # -- multi-page search --------------------------------------------------

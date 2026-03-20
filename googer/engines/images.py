@@ -1,5 +1,6 @@
 """Google image search engine."""
 
+import logging
 from typing import Any, ClassVar
 
 from ..config import (
@@ -14,6 +15,8 @@ from ..config import (
 from ..results import ImageResult
 from ..utils import extract_clean_url
 from .base import BaseEngine
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleImagesEngine(BaseEngine[ImageResult]):
@@ -92,4 +95,9 @@ class GoogleImagesEngine(BaseEngine[ImageResult]):
             r.url = extract_clean_url(r.url)
             if r.title or r.thumbnail:
                 cleaned.append(r)
+        if not cleaned:
+            logger.warning(
+                "Google Images returned 0 parseable results. Google now requires "
+                "JavaScript rendering \u2014 use backend='browser' or a different engine."
+            )
         return cleaned
